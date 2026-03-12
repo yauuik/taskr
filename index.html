@@ -57,7 +57,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .crd:hover{background:var(--hover);}
 .crd.sel{background:#F0EEFF;}
 .crd-name{font-size:15px;font-weight:500;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-.crd-name.prog{color:var(--amber);}
 .crd-name.done{text-decoration:line-through;color:var(--muted);}
 .crd-top{display:flex;align-items:center;gap:10px;}
 .meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);flex-shrink:0;}
@@ -234,7 +233,7 @@ function mkRow(p){
   c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
   const top=h("div",{className:"crd-top"});
-  const nameCls=showDone?"crd-name done":pip?"crd-name prog":"crd-name";
+  const nameCls=showDone?"crd-name done":"crd-name";
   const name=h("span",{className:nameCls},p.name);
   const meta=h("div",{className:"meta"});
   if(ts.length){
