@@ -45,8 +45,8 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 
 /* Cards */
 .cards{display:flex;flex-direction:column;gap:1px;}
-.row{display:flex;align-items:flex-start;transition:opacity 3s ease-out;overflow:hidden;}
-.row.fading{opacity:.12;}
+.row{display:flex;align-items:flex-start;}
+.row.done{opacity:.4;}
 .check{width:30px;padding-top:11px;display:flex;justify-content:center;flex-shrink:0;cursor:pointer;}
 .cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--muted);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;transition:all .2s;cursor:pointer;}
 .cb.prog{border-color:var(--amber);background:var(--card);color:var(--amber);}
@@ -64,7 +64,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 /* Inline tasks */
 .itasks{margin-top:5px;display:flex;flex-direction:column;}
 .it{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:13px;color:var(--sec);transition:opacity 2.5s ease-out,background .3s;}
-.it.fading{opacity:.08;background:rgba(0,200,117,.05);border-radius:4px;}
 .it.tdone{opacity:.3;}
 .it-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--muted);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;transition:all .2s;cursor:pointer;flex-shrink:0;}
 .it-cb.prog{border-color:var(--amber);background:var(--card);color:var(--amber);}
@@ -85,7 +84,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .sb.on{color:#fff;}
 .tr{display:flex;gap:6px;align-items:center;padding:7px 8px;border-radius:6px;font-size:13px;transition:all .3s;border-left:3px solid transparent;}
 .tr:hover{background:var(--hover);}
-.tr.fading{background:rgba(0,200,117,.08);opacity:0;border-left-color:var(--green);}
 .nr{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:6px;font-size:13px;line-height:1.35;border-left:3px solid var(--border);}
 .nr:hover{background:var(--hover);}
 .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;opacity:0;transition:opacity .15s;}
@@ -116,8 +114,8 @@ const DF=[
   {id:"p6",name:"IBAN Récupération clients",status:"To Do",tasks:[{text:"Coordonner avec V. Pécasse et L. Kluge",done:false,date:"2026-01"}],notes:[{date:"2026-01",text:"~20% clients sans IBAN"}]},
 ];
 const ST={"In Progress":{c:"#FDAB3D",bg:"#FFF4E0"},"To Do":{c:"#0086C0",bg:"#E0F4FF"},"Done":{c:"#00C875",bg:"#E0FFF0"}};
-let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,cm:null,cf:null,nt:"",nk:"",an:"",sel:new Set(),ft:new Set(),fp:new Set(),doneOpen:false};
-const ftR=new Set(),fpR=new Set();let svT=null;
+let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,cm:null,cf:null,nt:"",nk:"",an:"",sel:new Set(),doneOpen:false};
+let svT=null;
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
 async function lb(){const r=await fetch(BU+"/latest",{headers:HD});if(!r.ok)throw 0;return(await r.json()).record?.projects||[];}
@@ -130,61 +128,45 @@ function up(id,x){s.p=s.p.map(p=>p.id===id?{...p,...x}:p);ps(s.p);}
 function tSt(t){return t.st||(t.done?"done":"todo");}
 function setTSt(t,st){return {text:t.text,date:t.date,st:st,done:st==="done"};}
 
-// Project: To Do → In Progress (immediate) → Done (5s delay) → To Do (immediate)
+// Project cycle: To Do → In Progress → Done → To Do
 function togP(id){
   const p=s.p.find(x=>x.id===id);if(!p)return;
-  // Cancel fading
-  if(s.fp.has(id)){fpR.delete(id);s.fp.delete(id);R();return;}
   if(p.status==="To Do"){
     up(id,{status:"In Progress"});
   } else if(p.status==="In Progress"){
-    // Start fade → Done after 5s, cascade all tasks to done
-    fpR.add(id);s.fp.add(id);R();
-    setTimeout(()=>{if(!fpR.has(id))return;fpR.delete(id);s.fp.delete(id);
-      const cur=s.p.find(x=>x.id===id);
-      const ts=(cur?.tasks||[]).map(t=>setTSt(t,"done"));
-      up(id,{status:"Done",tasks:ts});
-    },5000);
+    const ts=(p.tasks||[]).map(t=>setTSt(t,"done"));
+    up(id,{status:"Done",tasks:ts});
   } else {
-    // Done → To Do, cascade all tasks to todo
     const ts=(p.tasks||[]).map(t=>setTSt(t,"todo"));
     up(id,{status:"To Do",tasks:ts});
   }
 }
 
-// Check if all tasks done → auto-promote parent to Done
+// Auto-promote parent when all tasks done
 function checkAllDone(pid){
   const p=s.p.find(x=>x.id===pid);
   if(!p||!p.tasks||!p.tasks.length)return;
   if(p.tasks.every(t=>tSt(t)==="done")&&p.status!=="Done"){
-    fpR.add(pid);s.fp.add(pid);R();
-    setTimeout(()=>{if(!fpR.has(pid))return;fpR.delete(pid);s.fp.delete(pid);up(pid,{status:"Done"});},5000);
+    up(pid,{status:"Done"});
   }
 }
 
-// Task: todo → progress (immediate) → done (3s delay) → todo (immediate)
+// Task cycle: todo → progress → done → todo
 function togT(pid,i){
-  const k=pid+"-"+i,p=s.p.find(x=>x.id===pid),t=(p?.tasks||[])[i];if(!t)return;
+  const p=s.p.find(x=>x.id===pid),t=(p?.tasks||[])[i];if(!t)return;
   const st=tSt(t);
-  // Cancel fading
-  if(s.ft.has(k)){ftR.delete(k);s.ft.delete(k);R();return;}
+  const ts=[...p.tasks];
   if(st==="todo"){
-    // → progress (immediate)
-    const ts=[...p.tasks];ts[i]=setTSt(t,"progress");
+    ts[i]=setTSt(t,"progress");
     up(pid,{tasks:ts});
-    // If project was To Do, promote to In Progress
     if(p.status==="To Do")up(pid,{status:"In Progress"});
   } else if(st==="progress"){
-    // → done (3s delay)
-    ftR.add(k);s.ft.add(k);R();
-    setTimeout(()=>{if(!ftR.has(k))return;ftR.delete(k);s.ft.delete(k);
-      const p2=s.p.find(x=>x.id===pid),ts=[...(p2?.tasks||[])];
-      if(ts[i]&&tSt(ts[i])!=="done")ts[i]=setTSt(ts[i],"done");
-      up(pid,{tasks:ts});checkAllDone(pid);
-    },3000);
+    ts[i]=setTSt(t,"done");
+    up(pid,{tasks:ts});
+    checkAllDone(pid);
   } else {
-    // done → todo (immediate)
-    const ts=[...p.tasks];ts[i]=setTSt(t,"todo");up(pid,{tasks:ts});
+    ts[i]=setTSt(t,"todo");
+    up(pid,{tasks:ts});
   }
 }
 function qadd(){if(!s.an.trim())return;const n={id:gid(),name:s.an.trim(),status:"To Do",tasks:[],notes:[]};ps([n,...s.p]);s.an="";s.ed=n.id;s.nk="";s.nt="";R();setTimeout(()=>{const el=document.getElementById("qi");if(el)el.value="";},50);}
@@ -213,16 +195,14 @@ function h(t,p,...k){const e=document.createElement(t);if(p)Object.entries(p).fo
 
 function mkRow(p){
   const ts=p.tasks||[];
-  const pf=s.fp.has(p.id); // parent is fading to Done
   const dc=ts.filter(t=>tSt(t)==="done").length;
   const pc=p.status==="Done", pip=p.status==="In Progress";
-  const showDone=pc||pf;
   const isSel=s.sel.has(p.id);
-  const row=h("div",{className:"row"+(pf?" fading":"")});
+  const row=h("div",{className:"row"+(pc?" done":"")});
 
-  // Project checkbox: fading shows as checked
-  const cbCls=showDone?"cb on":pip?"cb prog":"cb";
-  const cbTxt=showDone?"✓":pip?"–":"";
+  // Project checkbox: □ → – (orange) → ✓ (green)
+  const cbCls=pc?"cb on":pip?"cb prog":"cb";
+  const cbTxt=pc?"✓":pip?"–":"";
   row.append(h("div",{className:"check",onClick:e=>{e.stopPropagation();togP(p.id);}},h("div",{className:cbCls},cbTxt)));
 
   const c=h("div",{className:"crd"+(isSel?" sel":""),onClick:()=>{
@@ -231,14 +211,12 @@ function mkRow(p){
   c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
   const top=h("div",{className:"crd-top"});
-  const nameCls=showDone?"crd-name done":"crd-name";
-  const name=h("span",{className:nameCls},p.name);
+  const name=h("span",{className:pc?"crd-name done":"crd-name"},p.name);
   const meta=h("div",{className:"meta"});
   if(ts.length){
-    const allDone=pf?ts.length:dc;
     const pg=h("div",{className:"prog"});
-    pg.append(h("div",{className:"prog-f",style:{width:(allDone/ts.length*100)+"%",background:(pf||dc===ts.length)?"var(--green)":"var(--amber)"}}));
-    meta.append(pg,h("span",{},allDone+"/"+ts.length));
+    pg.append(h("div",{className:"prog-f",style:{width:(dc/ts.length*100)+"%",background:dc===ts.length?"var(--green)":"var(--amber)"}}));
+    meta.append(pg,h("span",{},dc+"/"+ts.length));
   }
   if((p.notes||[]).length)meta.append(h("span",{},"💬"+p.notes.length));
   top.append(name,meta);c.append(top);
@@ -246,15 +224,14 @@ function mkRow(p){
   if(ts.length){
     const itd=h("div",{className:"itasks"});
     ts.forEach((t,i)=>{
-      const k=p.id+"-"+i,fg=s.ft.has(k),st=tSt(t);
-      // Parent fading → all tasks show as done
-      const isDone=pf||st==="done"||fg;
-      const isProg=!pf&&st==="progress"&&!fg;
-      const it=h("div",{className:"it"+(fg?" fading":"")+(!fg&&!pf&&st==="done"?" tdone":"")});
+      const st=tSt(t);
+      const isDone=st==="done";
+      const isProg=st==="progress";
+      const it=h("div",{className:"it"+(isDone?" tdone":"")});
       const cbCls2=isDone?"it-cb on":isProg?"it-cb prog":"it-cb";
       const cbTxt2=isDone?"✓":isProg?"–":"";
       const spanCls=isDone?"dn":isProg?"prog":"";
-      it.append(h("div",{className:cbCls2,onClick:e=>{e.stopPropagation();if(!pf)togT(p.id,i);}},cbTxt2),h("span",{className:spanCls},t.text));
+      it.append(h("div",{className:cbCls2,onClick:e=>{e.stopPropagation();togT(p.id,i);}},cbTxt2),h("span",{className:spanCls},t.text));
       itd.append(it);
     });c.append(itd);
   }
@@ -382,11 +359,11 @@ function rEdit(){
   tir.append(h("input",{id:"ti",value:s.nk,placeholder:"Nouvelle tâche…",onInput:e=>{s.nk=e.target.value;},onKeydown:e=>{if(e.key==="Enter")atk();}}),h("button",{className:"btn btn-a",style:{padding:"8px 14px"},onClick:atk},"+"));
   const tl=h("div",{style:{display:"flex",flexDirection:"column",gap:"1px",maxHeight:"200px",overflowY:"auto"}});
   ts.forEach((t,i)=>{
-    const k=p.id+"-"+i,fg=s.ft.has(k),st=tSt(t);
-    const isDone=st==="done"||fg;
-    const isProg=st==="progress"&&!fg;
-    const tr=h("div",{className:"tr"+(fg?" fading":"")});
-    tr.style.background=!fg&&st==="done"?"rgba(0,200,117,.04)":!fg&&st==="progress"?"rgba(253,171,61,.04)":"transparent";
+    const st=tSt(t);
+    const isDone=st==="done";
+    const isProg=st==="progress";
+    const tr=h("div",{className:"tr"});
+    tr.style.background=isDone?"rgba(0,200,117,.04)":isProg?"rgba(253,171,61,.04)":"transparent";
     const cbCls=isDone?"it-cb on":isProg?"it-cb prog":"it-cb";
     const cbTxt=isDone?"✓":isProg?"–":"";
     const txtCol=isDone?"var(--muted)":isProg?"var(--amber)":"var(--text)";
