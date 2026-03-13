@@ -20,7 +20,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 
 .wrap{max-width:680px;margin:0 auto;padding:24px 20px calc(40px + env(safe-area-inset-bottom,0));padding-left:max(20px,env(safe-area-inset-left,0));padding-right:max(20px,env(safe-area-inset-right,0));}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
-.topbar h1{font-size:22px;font-weight:700;color:var(--dark);letter-spacing:-.03em;}
+.topbar h1{font-size:28px;font-weight:700;color:var(--dark);letter-spacing:-.04em;}
 .topbar .sync{font-size:10px;font-weight:600;margin-left:8px;}
 .icon-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:var(--sec);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
 .icon-btn:hover{background:var(--hover);}
@@ -106,7 +106,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 /* Mobile tweaks */
 @media(max-width:599px){
   .crd-name{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-  .topbar h1{font-size:20px;}
+  .topbar h1{font-size:26px;}
   .quick input{font-size:16px;}
   .sec-toggle{padding:8px 10px;font-size:16px;}
   .icon-btn{width:44px;height:44px;font-size:18px;}
@@ -441,6 +441,11 @@ function R(){
     w.append(hidSec);
   }
   if(!ip.length&&!td2.length&&!dn.length&&!hid.length) w.append(h("div",{className:"empty"},"Aucun projet."));
+
+  // Version footer
+  const vf=h("div",{style:{textAlign:"center",padding:"24px 0 12px",fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",opacity:".5",letterSpacing:".02em"}});
+  vf.textContent="v1.0 · 13 mar 2026 19:42";
+  w.append(vf);
 
   a.append(w);
   if(s.ed)rEdit();
