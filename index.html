@@ -154,8 +154,8 @@ function togP(id){
   const next=NEXT[p.status]||"To Do";
   const patch={status:next};
   const now=td();
-  if(next==="Done") patch.tasks=(p.tasks||[]).map(t=>({...t,st:"done",doneAt:t.doneAt||now}));
-  if(next==="To Do") patch.tasks=(p.tasks||[]).map(t=>{const o={...t,st:"todo"};delete o.doneAt;return o;});
+  if(next==="Done"){patch.doneAt=now;patch.tasks=(p.tasks||[]).map(t=>({...t,st:"done",doneAt:t.doneAt||now}));}
+  if(next==="To Do"){delete patch.doneAt;patch.tasks=(p.tasks||[]).map(t=>{const o={...t,st:"todo"};delete o.doneAt;return o;});}
   up(id,patch);
 }
 
@@ -172,12 +172,12 @@ function togT(pid,i){
   // Auto-promote: first task starts → project In Progress
   if(tSt(t)==="todo"&&p.status==="To Do") patch.status="In Progress";
   // Auto-demote: any task leaves done → project back to In Progress
-  if(tSt(t)==="done"&&nst!=="done"&&p.status==="Done") patch.status="In Progress";
+  if(tSt(t)==="done"&&nst!=="done"&&p.status==="Done"){patch.status="In Progress";patch.doneAt=null;}
   up(pid,patch,true);
   // Auto-complete: all tasks done → project Done
   const cur=s.p.find(x=>x.id===pid);
   if(cur&&cur.tasks&&cur.tasks.length&&cur.tasks.every(t2=>tSt(t2)==="done")&&cur.status!=="Done"){
-    up(pid,{status:"Done"});
+    up(pid,{status:"Done",doneAt:td()});
   } else {
     R();
   }
@@ -206,7 +206,7 @@ function onK(e){
   if(s.ed&&!ii){
     if(e.key==="t"){e.preventDefault();document.getElementById("ti")?.focus();}
     if(e.key==="n"){e.preventDefault();document.getElementById("ni")?.focus();}
-    if(e.key==="1")up(s.ed,{status:"To Do"});if(e.key==="2")up(s.ed,{status:"In Progress"});if(e.key==="3")up(s.ed,{status:"Done"});
+    if(e.key==="1")up(s.ed,{status:"To Do",doneAt:null});if(e.key==="2")up(s.ed,{status:"In Progress",doneAt:null});if(e.key==="3")up(s.ed,{status:"Done",doneAt:td()});
   }
 }
 
@@ -240,6 +240,7 @@ function mkRow(p){
     meta.append(pg,h("span",{},dc+"/"+vis.length));
   }
   if((p.notes||[]).length)meta.append(h("span",{},"💬"+p.notes.length));
+  if(isDone&&p.doneAt)meta.append(h("span",{style:{color:"var(--green)",fontSize:"10px",fontFamily:"monospace"}},"✓ "+shortDt(p.doneAt)));
   top.append(meta);c.append(top);
 
   if(ts.length){
@@ -365,7 +366,7 @@ function rEdit(){
   // Status buttons
   const sr=h("div",{style:{display:"flex",gap:"5px",marginBottom:"16px"}});
   [["To Do","#0086C0","#E0F4FF"],["In Progress","#FDAB3D","#FFF4E0"],["Done","#00C875","#E0FFF0"]].forEach(([x,c,bg])=>{
-    sr.append(h("button",{className:"sb"+(p.status===x?" on":""),style:p.status===x?{borderColor:c,background:c,color:"#fff"}:{},onClick:()=>up(p.id,{status:x})},x));
+    sr.append(h("button",{className:"sb"+(p.status===x?" on":""),style:p.status===x?{borderColor:c,background:c,color:"#fff"}:{},onClick:()=>{const patch={status:x};if(x==="Done")patch.doneAt=td();else patch.doneAt=null;up(p.id,patch);}},x));
   });
   m.append(sr);
 
