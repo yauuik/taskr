@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>📋 Projets</title>
-
+<title>Tasker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -43,7 +43,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .row.dim{opacity:.4;}
 .chk{width:30px;padding-top:11px;display:flex;justify-content:center;flex-shrink:0;cursor:pointer;}
 
-/* Checkbox 3 states: empty, progress (orange –), done (green ✓) */
 .bx{width:18px;height:18px;border-radius:4px;border:2px solid var(--muted);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .15s;cursor:pointer;color:transparent;user-select:none;}
 .bx.ip{border-color:var(--amber);color:var(--amber);background:var(--card);}
 .bx.dn{border-color:var(--green);background:var(--green);color:#fff;}
@@ -114,15 +113,21 @@ let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,cm:null,cf:null,n
 let svT=null;
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
-
-// Task status helper (backward compat)
 function tSt(t){return t.st||(t.done?"done":"todo");}
 
 // ─── Sync ───
 async function lb(){const r=await fetch(BU+"/latest",{headers:HD});if(!r.ok)throw 0;return(await r.json()).record?.projects||[];}
 async function sb(p){const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p})});if(!r.ok)throw 0;}
 function ps(p){s.p=p;s.sy="saving";R();if(svT)clearTimeout(svT);svT=setTimeout(async()=>{try{await sb(p);s.sy="synced";}catch{s.sy="error";}R();},800);}
-function up(id,patch){s.p=s.p.map(p=>p.id===id?{...p,...patch}:p);ps(s.p);}
+
+// up: update project — skipRender flag to avoid double render
+function up(id,patch,skipRender){
+  s.p=s.p.map(p=>p.id===id?{...p,...patch}:p);
+  s.sy="saving";
+  if(svT)clearTimeout(svT);
+  svT=setTimeout(async()=>{try{await sb(s.p);s.sy="synced";}catch{s.sy="error";}R();},800);
+  if(!skipRender) R();
+}
 
 (async()=>{try{const d=await lb();s.p=d.length?d:DF;if(!d.length)await sb(DF);s.sy="synced";}catch{s.p=DF;s.sy="error";}s.ok=true;R();document.addEventListener("keydown",onK);})();
 
@@ -134,7 +139,6 @@ function togP(id){
   const p=s.p.find(x=>x.id===id);if(!p)return;
   const next=NEXT[p.status]||"To Do";
   const patch={status:next};
-  // Cascade tasks
   if(next==="Done") patch.tasks=(p.tasks||[]).map(t=>({...t,st:"done"}));
   if(next==="To Do") patch.tasks=(p.tasks||[]).map(t=>({...t,st:"todo"}));
   up(id,patch);
@@ -146,19 +150,26 @@ function togT(pid,i){
   const ts=[...(p.tasks||[])];
   ts[i]={...t,st:TNEXT[tSt(t)]||"todo"};
   const patch={tasks:ts};
-  // Auto-promote project
+  // Auto-promote project if first task goes to progress
   if(tSt(t)==="todo"&&p.status==="To Do") patch.status="In Progress";
-  up(pid,patch);
-  // Check if all tasks done → promote parent
+  up(pid,patch,true); // skip first render
+  // Check if all tasks done → promote parent (single render)
   const cur=s.p.find(x=>x.id===pid);
   if(cur&&cur.tasks&&cur.tasks.length&&cur.tasks.every(t2=>tSt(t2)==="done")&&cur.status!=="Done"){
     up(pid,{status:"Done"});
+  } else {
+    R();
   }
 }
 
-function qadd(){if(!s.an.trim())return;const n={id:gid(),name:s.an.trim(),status:"To Do",tasks:[],notes:[]};ps([n,...s.p]);s.an="";s.ed=n.id;s.nk="";s.nt="";R();setTimeout(()=>{const el=document.getElementById("qi");if(el)el.value="";},50);}
-function atk(){if(!s.nk.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{tasks:[...(p.tasks||[]),{text:s.nk.trim(),st:"todo",date:td()}]});s.nk="";R();}
-function ant(){if(!s.nt.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{notes:[{date:td(),text:s.nt.trim()},...(p.notes||[])]});s.nt="";R();}
+function qadd(){
+  if(!s.an.trim())return;
+  const n={id:gid(),name:s.an.trim(),status:"To Do",tasks:[],notes:[]};
+  ps([n,...s.p]);
+  s.an="";s.ed=n.id;s.nk="";s.nt="";
+}
+function atk(){if(!s.nk.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{tasks:[...(p.tasks||[]),{text:s.nk.trim(),st:"todo",date:td()}]});s.nk="";}
+function ant(){if(!s.nt.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{notes:[{date:td(),text:s.nt.trim()},...(p.notes||[])]});s.nt="";}
 function cfm(m,f){s.cm=m;s.cf=f;R();}
 function xcfm(){s.cm=null;s.cf=null;R();}
 
@@ -192,7 +203,6 @@ function mkRow(p){
   const isDone=p.status==="Done";
   const row=h("div",{className:"row"+(isDone?" dim":"")});
 
-  // Project checkbox
   row.append(h("div",{className:"chk",onClick:e=>{e.stopPropagation();togP(p.id);}},
     h("div",{className:bxCls(pSt)},bxTxt(pSt))));
 
@@ -210,7 +220,6 @@ function mkRow(p){
   if((p.notes||[]).length)meta.append(h("span",{},"💬"+p.notes.length));
   top.append(meta);c.append(top);
 
-  // Inline tasks
   if(ts.length){
     const itd=h("div",{className:"itasks"});
     ts.forEach((t,i)=>{
@@ -239,6 +248,11 @@ function mkSec(label,color,count,toggle,isOpen,onToggle){
 
 // ─── Main render ───
 function R(){
+  // Skip re-render of modal if editing name (preserve focus)
+  const activeEl=document.activeElement;
+  const activeId=activeEl?.id;
+  const cursorPos=activeEl?.selectionStart;
+
   const a=document.getElementById("app");a.innerHTML="";
   if(!s.ok){a.append(h("div",{className:"empty"},"Chargement…"));return;}
   const scM={synced:{c:"var(--green)",t:"✓"},saving:{c:"var(--amber)",t:"⟳"},error:{c:"var(--red)",t:"✕"},loading:{c:"var(--blue)",t:"…"}};
@@ -248,11 +262,15 @@ function R(){
   const td2=s.p.filter(p=>p.status==="To Do");
   const dn=s.p.filter(p=>p.status==="Done");
 
+  // Clean stale selection IDs
+  const allIds=new Set(s.p.map(p=>p.id));
+  s.sel.forEach(id=>{if(!allIds.has(id))s.sel.delete(id);});
+
   const w=h("div",{className:"wrap"});
 
   // Topbar
   const tb=h("div",{className:"topbar"});
-  tb.append(h("div",{style:{display:"flex",alignItems:"center"}},h("h1",{},"Projets"),h("span",{className:"sync",style:{color:sc.c}},sc.t)));
+  tb.append(h("div",{style:{display:"flex",alignItems:"center"}},h("h1",{},"Tasker"),h("span",{className:"sync",style:{color:sc.c}},sc.t)));
   const acts=h("div",{style:{display:"flex",gap:"6px"}});
   acts.append(
     h("button",{className:"icon-btn",title:"Raccourcis",onClick:()=>{s.keys=true;R();}},"⌨"),
@@ -267,12 +285,12 @@ function R(){
 
   // Selection bar
   if(s.sel.size){
-    const sb=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px",padding:"8px 14px",background:"#FFF0F2",borderRadius:"8px",fontSize:"12px"}});
-    sb.append(
+    const sb2=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px",padding:"8px 14px",background:"#FFF0F2",borderRadius:"8px",fontSize:"12px"}});
+    sb2.append(
       h("span",{style:{flex:"1",color:"var(--sec)"}},s.sel.size+" sélect."),
       h("button",{className:"btn btn-r",style:{fontSize:"11px",padding:"4px 12px"},onClick:()=>cfm("Supprimer "+s.sel.size+" projet(s) ?",()=>{ps(s.p.filter(p=>!s.sel.has(p.id)));s.sel.clear();})},"Supprimer"),
       h("button",{className:"btn-t",onClick:()=>{s.sel.clear();R();}},"Annuler")
-    );w.append(sb);
+    );w.append(sb2);
   }
 
   // Sections
@@ -291,7 +309,21 @@ function R(){
   if(!ip.length&&!td2.length&&!dn.length) w.append(h("div",{className:"empty"},"Aucun projet."));
 
   a.append(w);
-  if(s.ed)rEdit();if(s.exp)rExp();if(s.keys)rKeys();if(s.cm)rCfm();
+  if(s.ed)rEdit();
+  if(s.exp)rExp();
+  if(s.keys)rKeys();
+  if(s.cm)rCfm();
+
+  // Restore focus after render
+  if(activeId){
+    const el=document.getElementById(activeId);
+    if(el){
+      el.focus();
+      if(typeof cursorPos==="number"&&el.setSelectionRange){
+        try{el.setSelectionRange(cursorPos,cursorPos);}catch(e){}
+      }
+    }
+  }
 }
 
 // ─── Edit modal ───
@@ -309,16 +341,16 @@ function rEdit(){
   });
   m.append(sr);
 
-  // Name
-  m.append(h("div",{style:{marginBottom:"14px"}},h("label",{},"Nom"),h("input",{value:p.name,onInput:e=>up(p.id,{name:e.target.value})})));
+  // Name — use id for focus restore
+  m.append(h("div",{style:{marginBottom:"14px"}},h("label",{},"Nom"),h("input",{id:"ed-name",value:p.name,onInput:e=>up(p.id,{name:e.target.value})})));
 
   // Tasks
-  const th=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}});
-  th.append(h("label",{style:{margin:"0"}},"Tâches"+(ts.length?" ("+dc+"/"+ts.length+")":"")));
+  const th2=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}});
+  th2.append(h("label",{style:{margin:"0"}},"Tâches"+(ts.length?" ("+dc+"/"+ts.length+")":"")));
   const tbs=h("div",{style:{display:"flex",gap:"6px"}});
   if(dc)tbs.append(h("button",{className:"btn-t",onClick:()=>up(p.id,{tasks:ts.filter(t=>tSt(t)!=="done")})},"✓ Terminées"));
   if(ts.length>1)tbs.append(h("button",{className:"btn-t",onClick:()=>cfm("Vider les tâches ?",()=>up(p.id,{tasks:[]}))},"🗑"));
-  th.append(tbs);
+  th2.append(tbs);
 
   const tir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"8px"}});
   tir.append(h("input",{id:"ti",value:s.nk,placeholder:"Nouvelle tâche…",onInput:e=>{s.nk=e.target.value;},onKeydown:e=>{if(e.key==="Enter")atk();}}),h("button",{className:"btn btn-a",style:{padding:"8px 14px"},onClick:atk},"+"));
@@ -337,7 +369,7 @@ function rEdit(){
     tl.append(tr);
   });
   if(!ts.length)tl.append(h("div",{style:{padding:"10px",color:"var(--muted)",fontSize:"13px",textAlign:"center"}},"Aucune tâche"));
-  m.append(h("div",{style:{marginBottom:"14px"}},th,tir,tl));
+  m.append(h("div",{style:{marginBottom:"14px"}},th2,tir,tl));
 
   // Notes
   const nh=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}});
