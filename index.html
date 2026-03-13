@@ -414,7 +414,7 @@ function R(){
 
   // Topbar
   const tb=h("div",{className:"topbar"});
-  tb.append(h("h1",{},h("span",{},"Task"),h("span",{style:{color:"var(--blue)"}},".r")));
+  tb.append(h("h1",{},h("span",{},"Task"),h("span",{style:{color:"var(--amber)"}},"."),h("span",{style:{color:"var(--blue)"}},"r")));
   const acts=h("div",{style:{display:"flex",gap:"6px",alignItems:"center"}});
   acts.append(
     h("button",{className:"icon-btn",title:"Raccourcis",onClick:()=>{s.keys=true;R();}},"⌨"),
