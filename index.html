@@ -418,7 +418,7 @@ function R(){
   const acts=h("div",{style:{display:"flex",gap:"6px",alignItems:"center"}});
   acts.append(
     h("button",{className:"icon-btn",title:"Raccourcis",onClick:()=>{s.keys=true;R();}},"⌨"),
-    h("button",{className:"icon-btn",title:"Export",onClick:()=>{s.exp=true;R();}},"↗")
+    (()=>{const b=h("button",{className:"icon-btn",title:"Export Markdown",onClick:()=>{s.exp=true;R();}});const sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("width","18");sv.setAttribute("height","18");sv.setAttribute("viewBox","0 0 208 128");sv.style.color="var(--sec)";const p1=document.createElementNS("http://www.w3.org/2000/svg","rect");p1.setAttribute("x","3");p1.setAttribute("y","3");p1.setAttribute("width","202");p1.setAttribute("height","122");p1.setAttribute("rx","12");p1.setAttribute("fill","none");p1.setAttribute("stroke","currentColor");p1.setAttribute("stroke-width","10");const p2=document.createElementNS("http://www.w3.org/2000/svg","path");p2.setAttribute("d","M30 98V30l30 36 30-36v68");p2.setAttribute("stroke","currentColor");p2.setAttribute("stroke-width","10");p2.setAttribute("fill","none");p2.setAttribute("stroke-linecap","round");p2.setAttribute("stroke-linejoin","round");const p3=document.createElementNS("http://www.w3.org/2000/svg","path");p3.setAttribute("d","M155 98l-27-30m0 0V30m0 38l-27-30");p3.setAttribute("stroke","currentColor");p3.setAttribute("stroke-width","10");p3.setAttribute("fill","none");p3.setAttribute("stroke-linecap","round");p3.setAttribute("stroke-linejoin","round");sv.append(p1,p2,p3);b.append(sv);return b;})()
   );
   // Sync indicator with hover tooltip
   const syncWrap=h("div",{style:{position:"relative",marginLeft:"2px"}});
