@@ -406,7 +406,7 @@ function R(){
 
   // Topbar
   const tb=h("div",{className:"topbar"});
-  tb.append(h("div",{style:{display:"flex",alignItems:"center"}},h("h1",{},"Task.r"),h("span",{className:"sync",style:{color:sc.c}},sc.t)));
+  tb.append(h("div",{style:{display:"flex",alignItems:"center"}},h("h1",{},h("span",{},"Task"),h("span",{style:{color:"var(--amber)"}},".r")),h("span",{className:"sync",style:{color:sc.c}},sc.t)));
   const acts=h("div",{style:{display:"flex",gap:"6px"}});
   acts.append(
     h("button",{className:"icon-btn",title:"Raccourcis",onClick:()=>{s.keys=true;R();}},"⌨"),
