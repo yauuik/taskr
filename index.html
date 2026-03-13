@@ -314,9 +314,9 @@ function mkRow(p){
   if((p.notes||[]).length){
     const noteIcon=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"3px"}});
     const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("width","12");svg.setAttribute("height","12");svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("fill","none");
+    svg.setAttribute("width","14");svg.setAttribute("height","14");svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("fill","none");svg.style.color="var(--sec)";
     const path=document.createElementNS("http://www.w3.org/2000/svg","path");
-    path.setAttribute("d","M2 2h12v8H5l-3 3V2z");path.setAttribute("stroke","currentColor");path.setAttribute("stroke-width","1.5");path.setAttribute("stroke-linejoin","round");
+    path.setAttribute("d","M2 2h12v8H5l-3 3V2z");path.setAttribute("stroke","currentColor");path.setAttribute("stroke-width","1.8");path.setAttribute("stroke-linejoin","round");
     svg.append(path);noteIcon.append(svg,document.createTextNode(p.notes.length+""));
     meta.append(noteIcon);
   }
