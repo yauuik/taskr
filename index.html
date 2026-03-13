@@ -65,7 +65,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .prog-f{height:100%;border-radius:2px;transition:width .3s;}
 
 .itasks{margin-top:2px;display:flex;flex-direction:column;margin-left:10px;padding-left:18px;border-left:1.5px dashed var(--muted);position:relative;}
-.it{display:flex;align-items:center;gap:7px;padding:6px 0;font-size:14px;color:var(--sec);min-height:36px;position:relative;}
+.it{display:flex;align-items:center;gap:7px;padding:6px 0;font-size:15px;color:var(--sec);min-height:36px;position:relative;}
 .it::before{content:"";position:absolute;left:-18px;top:50%;width:14px;height:0;border-top:1.5px dashed var(--muted);}
 .itasks>.it:last-child::after{content:"";position:absolute;left:-19.5px;top:50%;bottom:0;width:3px;background:var(--bg);}
 .it span.x{color:var(--muted);text-decoration:line-through;}
@@ -506,8 +506,10 @@ function R(){
 
   // Sections
   if(ip.length){
-    w.append(mkSec("In Progress","#FDAB3D",ip.length));
-    const cards=h("div",{className:"cards"});ip.forEach(p=>cards.append(mkRow(p)));w.append(cards);
+    const ipWrap=h("div",{style:{background:"rgba(253,171,61,.04)",borderRadius:"10px",padding:"6px 10px",margin:"0 -10px"}});
+    ipWrap.append(mkSec("In Progress","#FDAB3D",ip.length));
+    const cards=h("div",{className:"cards"});ip.forEach(p=>cards.append(mkRow(p)));ipWrap.append(cards);
+    w.append(ipWrap);
   }
   if(td2.length){
     w.append(mkSec("To Do","#0086C0",td2.length));
