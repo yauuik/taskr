@@ -493,7 +493,11 @@ function R(){
 function rEdit(){
   const p=s.p.find(x=>x.id===s.ed);if(!p)return;
   const ts=p.tasks||[],dc=ts.filter(t=>tSt(t)==="done").length;
-  const ov=h("div",{className:"ov",onClick:()=>{if(s.cm)return;s.ed=null;R();}});
+  const ov=h("div",{className:"ov"});
+  let ovTouchedOv=false;
+  ov.addEventListener("touchstart",e=>{ovTouchedOv=(e.target===ov);},{passive:true});
+  ov.addEventListener("touchend",e=>{if(!ovTouchedOv)return;e.preventDefault();if(s.cm)return;s.ed=null;s.noteEdit=false;R();});
+  ov.addEventListener("click",e=>{if(e.target!==ov)return;if(s.cm)return;s.ed=null;s.noteEdit=false;R();});
   const m=h("div",{className:"mod",onClick:e=>e.stopPropagation()});
   m.append(h("div",{className:"mod-hdr"},h("h3",{},p.name),h("button",{className:"mod-x",onClick:e=>{e.stopPropagation();if(s.cm)return;s.ed=null;R();}},"✕")));
 
@@ -555,7 +559,7 @@ function rEdit(){
     const ta=h("textarea",{id:"ni",placeholder:"Notes, liens, idées…",style:{width:"100%",padding:"11px 12px",borderRadius:"8px",border:"1.5px solid var(--accent)",fontSize:"14px",fontFamily:"inherit",outline:"none",color:"var(--text)",resize:"vertical",minHeight:"80px",maxHeight:"200px",lineHeight:"1.5"}});
     ta.value=noteVal;
     ta.addEventListener("input",e=>{up(p.id,{note:e.target.value},true);});
-    ta.addEventListener("blur",()=>{s.noteEdit=false;R();});
+    ta.addEventListener("blur",()=>{setTimeout(()=>{if(s.ed)s.noteEdit=false;R();},200);});
     nd.append(ta);
   }
   m.append(nd);
