@@ -438,25 +438,25 @@ function R(){
   if(sc.c==="var(--amber)")ssvg.style.animation="spin .8s linear infinite";
   syncDot.append(ssvg);
   // Tooltip
-  const tip=h("div",{style:{position:"absolute",right:"0",top:"36px",background:"var(--dark)",color:"#E6E9EF",borderRadius:"8px",padding:"10px 12px",fontSize:"10px",fontFamily:"monospace",lineHeight:"1.6",whiteSpace:"nowrap",boxShadow:"0 4px 16px rgba(0,0,0,.2)",zIndex:"100",opacity:"0",pointerEvents:"none",transition:"opacity .15s",minWidth:"200px"}});
+  const tip=h("div",{style:{position:"absolute",right:"0",top:"36px",background:"var(--card)",color:"var(--text)",borderRadius:"10px",padding:"10px 12px",fontSize:"10px",fontFamily:"monospace",lineHeight:"1.6",whiteSpace:"nowrap",boxShadow:"0 4px 16px rgba(0,0,0,.08)",border:"1px solid var(--border)",zIndex:"100",opacity:"0",pointerEvents:"none",transition:"opacity .15s",minWidth:"200px"}});
   if(syncLogs.length){
     [...syncLogs].slice(-6).reverse().forEach(l=>{
-      const iconCol=l.type==="☁"||l.type==="↓"?"#50FA7B":l.type==="↑"?"#FFB86C":"#FF5555";
+      const iconCol=l.type==="☁"||l.type==="↓"?"var(--green)":l.type==="↑"?"var(--amber)":"var(--red)";
       tip.append(h("div",{style:{display:"flex",gap:"6px"}},
-        h("span",{style:{color:"#6272A4"}},l.ts),
+        h("span",{style:{color:"var(--muted)"}},l.ts),
         h("span",{style:{color:iconCol}},l.type),
-        h("span",{},l.msg)
+        h("span",{style:{color:"var(--sec)"}},l.msg)
       ));
     });
   } else {
-    tip.append(h("div",{},"Aucun log"));
+    tip.append(h("div",{style:{color:"var(--muted)"}},"Aucun log"));
   }
   syncWrap.append(syncDot,tip);
   // Hover (desktop)
   syncWrap.addEventListener("mouseenter",()=>{tip.style.opacity="1";tip.style.pointerEvents="auto";});
   syncWrap.addEventListener("mouseleave",()=>{tip.style.opacity="0";tip.style.pointerEvents="none";});
-  // Tap (mobile)
-  syncDot.addEventListener("click",e=>{e.stopPropagation();const v=tip.style.opacity==="1";tip.style.opacity=v?"0":"1";tip.style.pointerEvents=v?"none":"auto";if(!v)setTimeout(()=>{tip.style.opacity="0";tip.style.pointerEvents="none";},3000);});
+  // Click → open jsonbin dashboard
+  syncDot.addEventListener("click",e=>{e.stopPropagation();window.open("https://jsonbin.io/app/bins","_blank");});
   acts.append(syncWrap);
   tb.append(acts);w.append(tb);
 
