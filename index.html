@@ -314,10 +314,10 @@ function mkRow(p){
   if((p.notes||[]).length){
     const noteIcon=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"3px"}});
     const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("width","14");svg.setAttribute("height","14");svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("fill","none");svg.style.color="var(--sec)";
+    svg.setAttribute("width","16");svg.setAttribute("height","16");svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("fill","none");svg.style.color="var(--sec)";
     const path=document.createElementNS("http://www.w3.org/2000/svg","path");
     path.setAttribute("d","M2 2h12v8H5l-3 3V2z");path.setAttribute("stroke","currentColor");path.setAttribute("stroke-width","1.8");path.setAttribute("stroke-linejoin","round");
-    svg.append(path);noteIcon.append(svg,document.createTextNode(p.notes.length+""));
+    svg.append(path);noteIcon.append(svg,h("span",{style:{color:"var(--sec)",fontSize:"12px",fontWeight:"500"}},p.notes.length+""));
     meta.append(noteIcon);
   }
   if(isDone&&p.doneAt)meta.append(h("span",{style:{color:"var(--green)",fontSize:"10px",fontFamily:"monospace"}},"✓ "+shortDt(p.doneAt)));
