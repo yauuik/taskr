@@ -126,6 +126,7 @@ let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,cm:null,cf:null,n
 let svT=null;
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
+function shortDt(d){if(!d)return"";const dt=new Date(d);const m=["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];return dt.getDate()+" "+m[dt.getMonth()];}
 function tSt(t){return t.st||(t.done?"done":"todo");}
 
 // ─── Sync ───
@@ -152,8 +153,9 @@ function togP(id){
   const p=s.p.find(x=>x.id===id);if(!p)return;
   const next=NEXT[p.status]||"To Do";
   const patch={status:next};
-  if(next==="Done") patch.tasks=(p.tasks||[]).map(t=>({...t,st:"done"}));
-  if(next==="To Do") patch.tasks=(p.tasks||[]).map(t=>({...t,st:"todo"}));
+  const now=td();
+  if(next==="Done") patch.tasks=(p.tasks||[]).map(t=>({...t,st:"done",doneAt:t.doneAt||now}));
+  if(next==="To Do") patch.tasks=(p.tasks||[]).map(t=>{const o={...t,st:"todo"};delete o.doneAt;return o;});
   up(id,patch);
 }
 
@@ -161,12 +163,14 @@ function togT(pid,i){
   const p=s.p.find(x=>x.id===pid);if(!p)return;
   const t=(p.tasks||[])[i];if(!t)return;
   const ts=[...(p.tasks||[])];
-  ts[i]={...t,st:TNEXT[tSt(t)]||"todo"};
+  const nst=TNEXT[tSt(t)]||"todo";
+  const nt={...t,st:nst};
+  if(nst==="done") nt.doneAt=td();
+  else delete nt.doneAt;
+  ts[i]=nt;
   const patch={tasks:ts};
-  // Auto-promote project if first task goes to progress
   if(tSt(t)==="todo"&&p.status==="To Do") patch.status="In Progress";
-  up(pid,patch,true); // skip first render
-  // Check if all tasks done → promote parent (single render)
+  up(pid,patch,true);
   const cur=s.p.find(x=>x.id===pid);
   if(cur&&cur.tasks&&cur.tasks.length&&cur.tasks.every(t2=>tSt(t2)==="done")&&cur.status!=="Done"){
     up(pid,{status:"Done"});
@@ -240,8 +244,9 @@ function mkRow(p){
       const it=h("div",{className:"it"});
       it.append(
         h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i);}},bxTxt(st)),
-        h("span",{className:st==="done"?"x":""},t.text)
+        h("span",{className:st==="done"?"x":"",style:{flex:"1"}},t.text)
       );
+      if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",marginLeft:"auto"}},shortDt(t.doneAt)));
       itd.append(it);
     });
     c.append(itd);
@@ -376,7 +381,7 @@ function rEdit(){
     tr.append(
       h("div",{className:bxsCls(st),onClick:()=>togT(p.id,i)},bxTxt(st)),
       h("span",{style:{flex:"1",color:st==="done"?"var(--muted)":"var(--text)",textDecoration:st==="done"?"line-through":"none",fontSize:"13px"}},t.text),
-      h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap"}},t.date||""),
+      h("span",{style:{fontSize:"10px",color:st==="done"?"var(--green)":"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap"}},st==="done"&&t.doneAt?"✓ "+shortDt(t.doneAt):t.date||""),
       h("button",{className:"rm",onClick:()=>{const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});}},"×")
     );
     tl.append(tr);
