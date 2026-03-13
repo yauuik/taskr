@@ -128,10 +128,11 @@ const DF=[
 ];
 
 // ─── State ───
-let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,cm:null,cf:null,nt:"",nk:"",an:"",sel:new Set(),doneOpen:false,sh:false,dragId:null,dragOverId:null};
+let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,cm:null,cf:null,nt:"",nk:"",an:"",sel:new Set(),doneOpen:false,sh:false};
 let svT=null;
 
-// ─── Drag & Drop ───
+// ─── Drag & Drop (To Do only) ───
+let dragId=null;
 function reorder(fromId,toId){
   if(!fromId||!toId||fromId===toId)return;
   const arr=[...s.p];
@@ -143,8 +144,7 @@ function reorder(fromId,toId){
   ps(arr);
 }
 
-// Touch drag state
-let touchDragEl=null,touchClone=null,touchStartY=0,touchCurId=null;
+let touchDragEl=null,touchClone=null,touchCurId=null;
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
 function shortDt(d){if(!d)return"";const dt=new Date(d);const m=["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];return dt.getDate()+" "+m[dt.getMonth()];}
@@ -243,46 +243,49 @@ function mkRow(p){
   const dc=ts.filter(t=>tSt(t)==="done").length;
   const pSt=p.status==="Done"?"done":p.status==="In Progress"?"progress":"todo";
   const isDone=p.status==="Done";
-  const row=h("div",{className:"row"+(s.dragId===p.id?" dragging":"")+(s.dragOverId===p.id?" drag-over":"")});
+  const isTodo=p.status==="To Do";
+  const row=h("div",{className:"row"});
   row.setAttribute("data-id",p.id);
 
-  // HTML5 Drag events on row
-  row.draggable=false; // only grip triggers drag
-  row.addEventListener("dragover",e=>{e.preventDefault();if(s.dragId&&s.dragId!==p.id){s.dragOverId=p.id;R();}});
-  row.addEventListener("dragleave",()=>{if(s.dragOverId===p.id){s.dragOverId=null;R();}});
-  row.addEventListener("drop",e=>{e.preventDefault();reorder(s.dragId,p.id);s.dragId=null;s.dragOverId=null;});
+  // Drag & Drop — To Do only
+  if(isTodo){
+    row.addEventListener("dragover",e=>{e.preventDefault();document.querySelectorAll(".row.drag-over").forEach(r=>r.classList.remove("drag-over"));row.classList.add("drag-over");});
+    row.addEventListener("dragleave",()=>row.classList.remove("drag-over"));
+    row.addEventListener("drop",e=>{e.preventDefault();document.querySelectorAll(".row.drag-over").forEach(r=>r.classList.remove("drag-over"));reorder(dragId,p.id);dragId=null;});
 
-  // Grip handle
-  const grip=h("div",{className:"grip"});
-  grip.textContent="⠿";
-  grip.draggable=true;
-  grip.addEventListener("dragstart",e=>{s.dragId=p.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setDragImage(row,0,0);setTimeout(()=>R(),0);});
-  grip.addEventListener("dragend",()=>{s.dragId=null;s.dragOverId=null;R();});
-  // Touch drag
-  grip.addEventListener("touchstart",e=>{
-    touchCurId=p.id;touchStartY=e.touches[0].clientY;
-    touchClone=row.cloneNode(true);touchClone.style.cssText="position:fixed;left:0;right:0;z-index:9999;opacity:.8;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.15);background:var(--card);";
-    touchClone.style.top=row.getBoundingClientRect().top+"px";
-    document.body.append(touchClone);
-    row.style.opacity=".3";touchDragEl=row;
-  },{passive:true});
-  grip.addEventListener("touchmove",e=>{
-    if(!touchClone)return;e.preventDefault();
-    const y=e.touches[0].clientY;
-    touchClone.style.top=(y-20)+"px";
-    const el=document.elementFromPoint(window.innerWidth/2,y);
-    const target=el?.closest?.(".row");
-    const tid=target?.getAttribute("data-id");
-    if(tid&&tid!==touchCurId){s.dragOverId=tid;R();}
-  });
-  grip.addEventListener("touchend",()=>{
-    if(touchClone){touchClone.remove();touchClone=null;}
-    if(touchDragEl){touchDragEl.style.opacity="";touchDragEl=null;}
-    if(touchCurId&&s.dragOverId){reorder(touchCurId,s.dragOverId);}
-    touchCurId=null;s.dragOverId=null;s.dragId=null;R();
-  });
-
-  row.append(grip);
+    const grip=h("div",{className:"grip"});
+    grip.textContent="⠿";
+    grip.draggable=true;
+    grip.addEventListener("dragstart",e=>{dragId=p.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setDragImage(row,0,0);row.classList.add("dragging");});
+    grip.addEventListener("dragend",()=>{dragId=null;row.classList.remove("dragging");document.querySelectorAll(".row.drag-over").forEach(r=>r.classList.remove("drag-over"));});
+    // Touch
+    grip.addEventListener("touchstart",e=>{
+      touchCurId=p.id;
+      touchClone=row.cloneNode(true);touchClone.style.cssText="position:fixed;left:0;right:0;z-index:9999;opacity:.8;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.15);background:#fff;";
+      touchClone.style.top=row.getBoundingClientRect().top+"px";
+      document.body.append(touchClone);
+      row.style.opacity=".3";touchDragEl=row;
+    },{passive:true});
+    grip.addEventListener("touchmove",e=>{
+      if(!touchClone)return;e.preventDefault();
+      const y=e.touches[0].clientY;
+      touchClone.style.top=(y-20)+"px";
+      document.querySelectorAll(".row.drag-over").forEach(r=>r.classList.remove("drag-over"));
+      const el=document.elementFromPoint(window.innerWidth/2,y);
+      const target=el?.closest?.(".row");
+      if(target&&target.getAttribute("data-id")!==touchCurId)target.classList.add("drag-over");
+    });
+    grip.addEventListener("touchend",()=>{
+      if(touchClone){touchClone.remove();touchClone=null;}
+      if(touchDragEl){touchDragEl.style.opacity="";touchDragEl=null;}
+      const overEl=document.querySelector(".row.drag-over");
+      const toId=overEl?.getAttribute("data-id");
+      document.querySelectorAll(".row.drag-over").forEach(r=>r.classList.remove("drag-over"));
+      if(touchCurId&&toId)reorder(touchCurId,toId);
+      touchCurId=null;
+    });
+    row.append(grip);
+  }
 
   row.append(h("div",{className:"chk",onClick:e=>{e.stopPropagation();togP(p.id);}},
     h("div",{className:bxCls(pSt)},bxTxt(pSt))));
@@ -350,7 +353,7 @@ function R(){
 
   const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden);
   const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden);
-  const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden);
+  const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
   const hid=s.p.filter(p=>p.hidden);
 
   // Clean stale selection IDs
