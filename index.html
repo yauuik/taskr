@@ -411,7 +411,7 @@ function R(){
   acts.append(
     h("button",{className:"icon-btn",title:"Raccourcis",onClick:()=>{s.keys=true;R();}},"⌨"),
     h("button",{className:"icon-btn",title:"Export",onClick:()=>{s.exp=true;R();}},"↗"),
-    h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",width:"28px",height:"28px",borderRadius:"50%",background:sc.c==="var(--green)"?"rgba(0,200,117,.12)":sc.c==="var(--amber)"?"rgba(253,171,61,.12)":"rgba(226,68,92,.12)",color:sc.c,fontSize:"14px",fontWeight:"700",marginLeft:"2px"}},sc.t)
+    h("a",{href:"https://yauuik.github.io/tracker/",target:"_blank",rel:"noopener",style:{display:"flex",alignItems:"center",justifyContent:"center",width:"28px",height:"28px",borderRadius:"50%",background:sc.c==="var(--green)"?"rgba(0,200,117,.12)":sc.c==="var(--amber)"?"rgba(253,171,61,.12)":"rgba(226,68,92,.12)",color:sc.c,fontSize:"14px",fontWeight:"700",marginLeft:"2px",textDecoration:"none",cursor:"pointer"}},sc.t)
   );
   tb.append(acts);w.append(tb);
 
