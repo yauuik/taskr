@@ -380,7 +380,7 @@ function mkRow(p){
 
   // ═══ EXPANDED STATE ═══
   if(isOpen){
-    const c=h("div",{className:"crd",style:{cursor:"default",background:"var(--card)",borderRadius:"10px",border:"1.5px solid var(--border)",margin:"2px 0",padding:"10px 14px"}});
+    const c=h("div",{className:"crd",style:{cursor:"default",background:"var(--card)"}});
     c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
     // Same top row as collapsed but name is an input
