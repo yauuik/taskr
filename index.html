@@ -169,8 +169,12 @@ function togT(pid,i){
   else delete nt.doneAt;
   ts[i]=nt;
   const patch={tasks:ts};
+  // Auto-promote: first task starts → project In Progress
   if(tSt(t)==="todo"&&p.status==="To Do") patch.status="In Progress";
+  // Auto-demote: any task leaves done → project back to In Progress
+  if(tSt(t)==="done"&&nst!=="done"&&p.status==="Done") patch.status="In Progress";
   up(pid,patch,true);
+  // Auto-complete: all tasks done → project Done
   const cur=s.p.find(x=>x.id===pid);
   if(cur&&cur.tasks&&cur.tasks.length&&cur.tasks.every(t2=>tSt(t2)==="done")&&cur.status!=="Done"){
     up(pid,{status:"Done"});
@@ -246,7 +250,7 @@ function mkRow(p){
         h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i);}},bxTxt(st)),
         h("span",{className:st==="done"?"x":"",style:{flex:"1"}},t.text)
       );
-      if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",marginLeft:"auto"}},shortDt(t.doneAt)));
+      if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
       itd.append(it);
     });
     c.append(itd);
