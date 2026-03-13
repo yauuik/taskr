@@ -150,7 +150,26 @@ let touchDragEl=null,touchClone=null,touchCurId=null;
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
 function shortDt(d){if(!d)return"";const dt=new Date(d);const m=["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];return dt.getDate()+" "+m[dt.getMonth()];}
-function tSt(t){return t.st||(t.done?"done":"todo");}
+// Render text with clickable links and line breaks
+function richText(txt,style){
+  const sp=h("span",{style:style||{}});
+  const urlRe=/(https?:\/\/[^\s]+)/g;
+  const lines=txt.split("\n");
+  lines.forEach((line,li)=>{
+    let last=0;
+    line.replace(urlRe,(m,offset)=>{
+      if(offset>last)sp.append(document.createTextNode(line.slice(last,offset)));
+      const a=h("a",{href:m,style:{color:"var(--accent)",textDecoration:"underline",wordBreak:"break-all"}});
+      a.textContent=m.length>50?m.slice(0,47)+"…":m;
+      a.target="_blank";a.rel="noopener";
+      a.addEventListener("click",e=>e.stopPropagation());
+      sp.append(a);last=offset+m.length;
+    });
+    if(last<line.length)sp.append(document.createTextNode(line.slice(last)));
+    if(li<lines.length-1)sp.append(document.createElement("br"));
+  });
+  return sp;
+}function tSt(t){return t.st||(t.done?"done":"todo");}
 
 // ─── Sync ───
 async function lb(){const r=await fetch(BU+"/latest",{headers:HD});if(!r.ok)throw 0;return(await r.json()).record?.projects||[];}
@@ -514,13 +533,24 @@ function rEdit(){
   const nh=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}});
   nh.append(h("label",{style:{margin:"0"}},"Notes"));
   if((p.notes||[]).length>1)nh.append(h("button",{className:"btn-t",onClick:()=>cfm("Vider les notes ?",()=>up(p.id,{notes:[]}))},"🗑"));
-  const nir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"8px"}});
-  nir.append(h("input",{id:"ni",value:s.nt,placeholder:"Nouvelle note…",onInput:e=>{s.nt=e.target.value;},onKeydown:e=>{if(e.key==="Enter")ant();}}),h("button",{className:"btn btn-a",style:{padding:"8px 14px"},onClick:ant},"+"));
-  const nl=h("div",{style:{display:"flex",flexDirection:"column",gap:"2px",maxHeight:"160px",overflowY:"auto"}});
-  (p.notes||[]).forEach((n,i)=>{nl.append(h("div",{className:"nr"},
-    h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingTop:"1px"}},n.date),
-    h("span",{style:{flex:"1",fontSize:"13px"}},n.text),
-    h("button",{className:"rm",onClick:()=>{const x=[...(p.notes||[])];x.splice(i,1);up(p.id,{notes:x});}},"×")));});
+  const nir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"8px",alignItems:"flex-end"}});
+  const ta=h("textarea",{id:"ni",placeholder:"Nouvelle note…",style:{flex:"1",padding:"9px 12px",borderRadius:"8px",border:"1.5px solid var(--border)",fontSize:"14px",fontFamily:"inherit",outline:"none",color:"var(--text)",resize:"vertical",minHeight:"40px",maxHeight:"120px",lineHeight:"1.4",transition:"border-color .15s"}});
+  ta.value=s.nt;
+  ta.addEventListener("input",e=>{s.nt=e.target.value;});
+  ta.addEventListener("focus",()=>{ta.style.borderColor="var(--accent)";});
+  ta.addEventListener("blur",()=>{ta.style.borderColor="var(--border)";});
+  ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();ant();}});
+  nir.append(ta,h("button",{className:"btn btn-a",style:{padding:"8px 14px",alignSelf:"flex-end",marginBottom:"1px"},onClick:ant},"+"));
+  const nl=h("div",{style:{display:"flex",flexDirection:"column",gap:"2px",maxHeight:"200px",overflowY:"auto"}});
+  (p.notes||[]).forEach((n,i)=>{
+    const nr=h("div",{className:"nr"});
+    nr.append(
+      h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingTop:"1px"}},n.date),
+      richText(n.text,{flex:"1",fontSize:"13px",lineHeight:"1.45"}),
+      h("button",{className:"rm",onClick:()=>{const x=[...(p.notes||[])];x.splice(i,1);up(p.id,{notes:x});}},"×")
+    );
+    nl.append(nr);
+  });
   if(!(p.notes||[]).length)nl.append(h("div",{style:{padding:"10px",color:"var(--muted)",fontSize:"13px",textAlign:"center"}},"Aucune note"));
   m.append(h("div",{style:{marginBottom:"14px"}},nh,nir,nl));
 
