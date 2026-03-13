@@ -386,6 +386,7 @@ function mkRow(p){
 
     // Editable name
     const nameIn=h("input",{id:"ed-name",value:p.name,style:{fontSize:"15px",fontWeight:"500",lineHeight:"1.35",flex:"1",minWidth:"0",border:"none",outline:"none",background:"transparent",fontFamily:"inherit",color:"var(--text)",padding:"0",margin:"0",wordBreak:"break-word"},onInput:e=>up(p.id,{name:e.target.value},true)});
+    requestAnimationFrame(()=>{nameIn.focus();nameIn.selectionStart=nameIn.selectionEnd=nameIn.value.length;});
     const top=h("div",{className:"crd-top"});
     top.append(nameIn);
     const collapseBtn=h("span",{style:{fontSize:"12px",color:"var(--muted)",cursor:"pointer",padding:"4px 6px",flexShrink:"0"},onClick:()=>{s.ed=null;s.noteEdit=false;R();}},"▲");
