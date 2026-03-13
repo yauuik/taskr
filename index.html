@@ -40,9 +40,10 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 
 .cards{display:flex;flex-direction:column;gap:1px;}
 .row{display:flex;align-items:flex-start;transition:transform .15s,opacity .15s;}
-.row.dragging{opacity:.3;transform:scale(.98);}
+.row.dragging{opacity:.4;}
 .row.drag-over-above{border-top:2px solid var(--accent);margin-top:-2px;}
 .row.drag-over-below{border-bottom:2px solid var(--accent);margin-bottom:-2px;}
+.row.drag-highlight{background:rgba(97,97,255,.06);border-radius:8px;}
 .grip{width:24px;padding-top:13px;display:flex;justify-content:center;flex-shrink:0;cursor:grab;color:var(--muted);font-size:14px;opacity:1;transition:opacity .15s;user-select:none;-webkit-user-select:none;letter-spacing:1px;}
 .grip:active{cursor:grabbing;}
 .row:hover .grip{opacity:1;}
@@ -301,13 +302,14 @@ function mkRow(p){
   row.setAttribute("data-id",p.id);
 
   // Drag & Drop — To Do only
-  const clearDO=()=>document.querySelectorAll(".row.drag-over-above,.row.drag-over-below").forEach(r=>{r.classList.remove("drag-over-above","drag-over-below");});
+  const clearDO=()=>document.querySelectorAll(".row.drag-over-above,.row.drag-over-below,.row.drag-highlight").forEach(r=>{r.classList.remove("drag-over-above","drag-over-below","drag-highlight");});
   if(isTodo){
     row.addEventListener("dragover",e=>{e.preventDefault();clearDO();
       const fi=s.p.findIndex(x=>x.id===dragId),ti=s.p.findIndex(x=>x.id===p.id);
       row.classList.add(fi<ti?"drag-over-below":"drag-over-above");
+      row.classList.add("drag-highlight");
     });
-    row.addEventListener("dragleave",()=>{row.classList.remove("drag-over-above","drag-over-below");});
+    row.addEventListener("dragleave",()=>{row.classList.remove("drag-over-above","drag-over-below","drag-highlight");});
     row.addEventListener("drop",e=>{e.preventDefault();clearDO();reorder(dragId,p.id);dragId=null;});
 
     const grip=h("div",{className:"grip"});
@@ -318,7 +320,7 @@ function mkRow(p){
     // Touch
     grip.addEventListener("touchstart",e=>{
       touchCurId=p.id;
-      touchClone=row.cloneNode(true);touchClone.style.cssText="position:fixed;left:0;right:0;z-index:9999;opacity:.8;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.15);background:#fff;";
+      touchClone=row.cloneNode(true);touchClone.style.cssText="position:fixed;left:0;right:0;z-index:9999;opacity:.85;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.12);background:rgba(97,97,255,.06);border-radius:8px;border:1.5px solid rgba(97,97,255,.2);";
       touchClone.style.top=row.getBoundingClientRect().top+"px";
       document.body.append(touchClone);
       row.style.opacity=".3";touchDragEl=row;
@@ -334,6 +336,7 @@ function mkRow(p){
       if(target&&tid!==touchCurId){
         const fi=s.p.findIndex(x=>x.id===touchCurId),ti=s.p.findIndex(x=>x.id===tid);
         target.classList.add(fi<ti?"drag-over-below":"drag-over-above");
+        target.classList.add("drag-highlight");
       }
     });
     grip.addEventListener("touchend",()=>{
