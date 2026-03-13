@@ -415,10 +415,20 @@ function R(){
   // Topbar
   const tb=h("div",{className:"topbar"});
   tb.append(h("h1",{},h("span",{},"Task"),h("span",{style:{color:"var(--amber)"}},"."),h("span",{style:{color:"var(--blue)"}},"r")));
-  const acts=h("div",{style:{display:"flex",gap:"6px",alignItems:"center"}});
+  const acts=h("div",{style:{display:"flex",gap:"4px",alignItems:"center"}});
+  // Helper: make SVG icon button
+  function mkIcon(title,paths,onClick){
+    const b=h("button",{className:"icon-btn",title,onClick});
+    const sv=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    sv.setAttribute("width","18");sv.setAttribute("height","18");sv.setAttribute("viewBox","0 0 24 24");sv.setAttribute("fill","none");sv.style.color="currentColor";
+    paths.forEach(d=>{const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);p.setAttribute("stroke","currentColor");p.setAttribute("stroke-width","1.8");p.setAttribute("fill","none");p.setAttribute("stroke-linecap","round");p.setAttribute("stroke-linejoin","round");sv.append(p);});
+    b.append(sv);return b;
+  }
   acts.append(
-    h("button",{className:"icon-btn",title:"Raccourcis",onClick:()=>{s.keys=true;R();}},"⌨"),
-    (()=>{const b=h("button",{className:"icon-btn",title:"Markdown",onClick:()=>{s.exp=true;R();}});const sv=document.createElementNS("http://www.w3.org/2000/svg","svg");sv.setAttribute("width","18");sv.setAttribute("height","18");sv.setAttribute("viewBox","0 0 24 24");sv.setAttribute("fill","none");sv.style.color="var(--sec)";const p1=document.createElementNS("http://www.w3.org/2000/svg","path");p1.setAttribute("d","M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z");p1.setAttribute("stroke","currentColor");p1.setAttribute("stroke-width","1.8");p1.setAttribute("fill","none");const p2=document.createElementNS("http://www.w3.org/2000/svg","path");p2.setAttribute("d","M7 15V9l3 3.5L13 9v6");p2.setAttribute("stroke","currentColor");p2.setAttribute("stroke-width","1.8");p2.setAttribute("fill","none");p2.setAttribute("stroke-linecap","round");p2.setAttribute("stroke-linejoin","round");const p3=document.createElementNS("http://www.w3.org/2000/svg","path");p3.setAttribute("d","M18 15l-2-2.5V9v4.5L14 16");p3.setAttribute("stroke","currentColor");p3.setAttribute("stroke-width","1.8");p3.setAttribute("fill","none");p3.setAttribute("stroke-linecap","round");p3.setAttribute("stroke-linejoin","round");sv.append(p1,p2,p3);b.append(sv);return b;})()
+    // Shortcuts: ? in circle
+    mkIcon("Raccourcis",["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z","M9.5 9a2.5 2.5 0 0 1 4.9-.5c0 1.5-2.4 2-2.4 3.5","M12 17h.01"],()=>{s.keys=true;R();}),
+    // Markdown: code brackets
+    mkIcon("Markdown",["M16 18l6-6-6-6","M8 6l-6 6 6 6"],()=>{s.exp=true;R();})
   );
   // Sync indicator with hover tooltip
   const syncWrap=h("div",{style:{position:"relative",marginLeft:"2px"}});
