@@ -383,11 +383,14 @@ function mkRow(p){
     const c=h("div",{className:"crd",style:{cursor:"default",background:"var(--card)"}});
     c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
-    // Same top row as collapsed but name is an input
+    // Same top row as collapsed — name is contentEditable (no shift)
     const top=h("div",{className:"crd-top"});
-    const nameIn=h("input",{id:"ed-name",value:p.name,style:{fontSize:"15px",fontWeight:"500",lineHeight:"1.35",flex:"1",minWidth:"0",border:"none",outline:"none",background:"transparent",fontFamily:"inherit",color:isDone?"var(--muted)":"var(--text)",textDecoration:isDone?"line-through":"none",padding:"0",margin:"0"},onInput:e=>up(p.id,{name:e.target.value},true)});
-    requestAnimationFrame(()=>{nameIn.focus();nameIn.selectionStart=nameIn.selectionEnd=nameIn.value.length;});
-    top.append(nameIn);
+    const nameSpan=h("span",{className:"crd-name"+(isDone?" x":""),contentEditable:"true",style:{outline:"none",cursor:"text"}});
+    nameSpan.textContent=p.name;
+    nameSpan.addEventListener("input",()=>up(p.id,{name:nameSpan.textContent.trim()},true));
+    nameSpan.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();nameSpan.blur();}});
+    requestAnimationFrame(()=>{nameSpan.focus();const sel=window.getSelection();sel.selectAllChildren(nameSpan);sel.collapseToEnd();});
+    top.append(nameSpan);
     const meta=h("div",{className:"meta"});
     if(ts.length){
       const pg=h("div",{className:"prog"});
@@ -662,18 +665,21 @@ function R(){
   a.append(w);
 
   // Click outside expanded card → close
-  if(!s.ed&&s._outsideH){document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;}
-  if(s.ed){
-    if(!s._outsideH){
-      s._outsideH=e=>{
-        if(!s.ed||s.cm){if(!s.ed){document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;}return;}
-        const openRow=document.querySelector('.row[data-id="'+s.ed+'"]');
-        if(openRow&&openRow.contains(e.target))return;
-        document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;
-        s.ed=null;s.noteEdit=false;R();
-      };
-      setTimeout(()=>document.addEventListener("mousedown",s._outsideH,true),100);
-    }
+  if(s._outsideH){document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;}
+  if(s.ed&&!s.cm){
+    s._outsideH=e=>{
+      if(!s.ed||s.cm)return;
+      // Check if click is inside the expanded row
+      let el=e.target;
+      while(el){
+        if(el.getAttribute&&el.getAttribute("data-id")===s.ed)return;
+        if(el.className&&typeof el.className==="string"&&(el.className.includes("cfm")||el.className.includes("ov")))return;
+        el=el.parentElement;
+      }
+      document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;
+      s.ed=null;s.noteEdit=false;R();
+    };
+    setTimeout(()=>document.addEventListener("mousedown",s._outsideH,true),50);
   }
 
   if(s.exp)rExp();
