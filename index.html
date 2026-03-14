@@ -39,7 +39,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .sec-line{flex:1;height:1px;background:var(--border);}
 
 .cards{display:flex;flex-direction:column;gap:1px;}
-.row{display:flex;align-items:flex-start;transition:transform .15s,opacity .15s;min-width:0;overflow:hidden;}
+.row{display:flex;align-items:flex-start;transition:transform .15s,opacity .15s;min-width:0;overflow:visible;}
 .row.dragging{opacity:.3;}
 .row.drag-over-above{border-top:3px solid var(--accent);margin-top:-3px;position:relative;}
 .row.drag-over-above::before{content:"";position:absolute;top:-5px;left:0;width:7px;height:7px;border-radius:50%;background:var(--accent);}
