@@ -109,7 +109,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .row-urgent{background:rgba(226,68,92,.04) !important;}
 .row-urgent .crd-name{color:var(--red) !important;font-weight:700;}
 .row-urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
-.ac-wrap{position:relative;}
 .ac-list{background:var(--card);border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:9999;max-height:160px;overflow-y:auto;display:none;}
 .ac-list.open{display:block;}
 .ac-item{padding:5px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
@@ -318,77 +317,80 @@ function richText(txt,style){
   return sp;
 }
 
-// Mention autocomplete — dropdown portaled to body (no clipping)
-function mkMentionInput(inputEl,onEnter){
-  const wrap=h("div",{className:"ac-wrap",style:{flex:"1"}});
-  const list=document.createElement("div");
-  list.className="ac-list";
-  list.style.position="fixed";
-  document.body.append(list);
-  let acOpen=false,acIdx=0,acQuery="",acFiltered=[];
+// ─── Global mention autocomplete ───
+const acEl=document.createElement("div");
+acEl.className="ac-list";
+acEl.style.position="fixed";
+document.body.append(acEl);
+let acTarget=null,acOpen=false,acIdx=0,acFiltered=[];
 
-  function closeAc(){acOpen=false;list.classList.remove("open");list.innerHTML="";}
-  function positionList(){
-    const r=inputEl.getBoundingClientRect();
-    list.style.left=r.left+"px";
-    list.style.width=r.width+"px";
-    if(window.innerHeight-r.bottom>170){list.style.top=(r.bottom+2)+"px";list.style.bottom="auto";}
-    else{list.style.bottom=(window.innerHeight-r.top+2)+"px";list.style.top="auto";}
-  }
-  function openAc(q){
-    acQuery=q.toLowerCase();
-    acFiltered=TEAM.filter(t=>t.toLowerCase().startsWith(acQuery));
-    if(!acFiltered.length){closeAc();return;}
-    acOpen=true;acIdx=0;
-    list.innerHTML="";
-    acFiltered.forEach((name,i)=>{
-      const it=h("div",{className:"ac-item"+(i===0?" sel":"")});
-      it.append(h("div",{className:"ac-av"},name[0].toUpperCase()),h("span",{},name));
-      it.addEventListener("mousedown",e=>{e.preventDefault();pickMention(name);});
-      list.append(it);
-    });
-    positionList();
-    list.classList.add("open");
-  }
-  function pickMention(name){
-    const v=inputEl.value;
-    const cur=inputEl.selectionStart!=null?inputEl.selectionStart:v.length;
-    const before=v.slice(0,cur);
-    const atIdx=before.lastIndexOf("@");
-    if(atIdx<0){closeAc();return;}
-    inputEl.value=v.slice(0,atIdx)+"@"+name+" "+v.slice(cur);
-    inputEl.dispatchEvent(new Event("input",{bubbles:true}));
-    closeAc();
-    inputEl.focus();
-    const newPos=atIdx+name.length+2;
-    inputEl.setSelectionRange(newPos,newPos);
-  }
-  function checkMention(){
-    const v=inputEl.value;
-    const cur=inputEl.selectionStart!=null?inputEl.selectionStart:v.length;
-    const before=v.slice(0,cur);
-    const atIdx=before.lastIndexOf("@");
-    if(atIdx>=0&&(atIdx===0||before[atIdx-1]===" ")){
-      const q=before.slice(atIdx+1);
-      if(!/\s/.test(q))openAc(q);
-      else closeAc();
-    } else closeAc();
-  }
-  inputEl.addEventListener("input",checkMention);
-  inputEl.addEventListener("keyup",checkMention);
-  inputEl.addEventListener("keydown",e=>{
-    if(acOpen){
-      if(e.key==="ArrowDown"){e.preventDefault();acIdx=Math.min(acIdx+1,acFiltered.length-1);list.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx));}
-      else if(e.key==="ArrowUp"){e.preventDefault();acIdx=Math.max(acIdx-1,0);list.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx));}
-      else if(e.key==="Enter"&&acFiltered[acIdx]){e.preventDefault();pickMention(acFiltered[acIdx]);return;}
-      else if(e.key==="Escape"){e.preventDefault();closeAc();return;}
-    }
-    if(!acOpen&&e.key==="Enter"&&onEnter){e.preventDefault();onEnter();}
+function acClose(){acOpen=false;acEl.classList.remove("open");acEl.innerHTML="";acTarget=null;}
+function acPosition(el){
+  const r=el.getBoundingClientRect();
+  acEl.style.left=r.left+"px";acEl.style.width=r.width+"px";
+  if(window.innerHeight-r.bottom>170){acEl.style.top=(r.bottom+2)+"px";acEl.style.bottom="auto";}
+  else{acEl.style.bottom=(window.innerHeight-r.top+2)+"px";acEl.style.top="auto";}
+}
+function acShow(q,el){
+  acFiltered=TEAM.filter(t=>t.toLowerCase().startsWith(q.toLowerCase()));
+  if(!acFiltered.length){acClose();return;}
+  acTarget=el;acOpen=true;acIdx=0;
+  acEl.innerHTML="";
+  acFiltered.forEach((name,i)=>{
+    const it=h("div",{className:"ac-item"+(i===0?" sel":"")});
+    it.append(h("div",{className:"ac-av"},name[0].toUpperCase()),h("span",{},name));
+    it.addEventListener("mousedown",e=>{e.preventDefault();acPick(name);});
+    acEl.append(it);
   });
-  inputEl.addEventListener("blur",()=>setTimeout(closeAc,150));
+  acPosition(el);
+  acEl.classList.add("open");
+}
+function acPick(name){
+  if(!acTarget)return;
+  const v=acTarget.value;
+  const cur=acTarget.selectionStart!=null?acTarget.selectionStart:v.length;
+  const before=v.slice(0,cur);
+  const atIdx=before.lastIndexOf("@");
+  if(atIdx<0){acClose();return;}
+  acTarget.value=v.slice(0,atIdx)+"@"+name+" "+v.slice(cur);
+  acTarget.dispatchEvent(new Event("input",{bubbles:true}));
+  const el=acTarget;
+  acClose();
+  el.focus();
+  const np=atIdx+name.length+2;
+  el.setSelectionRange(np,np);
+}
+function acCheck(el){
+  const v=el.value;
+  const cur=el.selectionStart!=null?el.selectionStart:v.length;
+  const before=v.slice(0,cur);
+  const atIdx=before.lastIndexOf("@");
+  if(atIdx>=0&&(atIdx===0||before[atIdx-1]===" ")){
+    const q=before.slice(atIdx+1);
+    if(!/\s/.test(q)){acShow(q,el);return;}
+  }
+  acClose();
+}
 
-  wrap.append(inputEl);
-  return wrap;
+// Global listeners — works on ANY input with class "ac-in"
+document.addEventListener("input",e=>{if(e.target.classList.contains("ac-in"))acCheck(e.target);});
+document.addEventListener("keyup",e=>{if(e.target.classList.contains("ac-in"))acCheck(e.target);});
+document.addEventListener("keydown",e=>{
+  if(!e.target.classList.contains("ac-in"))return;
+  if(acOpen){
+    if(e.key==="ArrowDown"){e.preventDefault();acIdx=Math.min(acIdx+1,acFiltered.length-1);acEl.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx));}
+    else if(e.key==="ArrowUp"){e.preventDefault();acIdx=Math.max(acIdx-1,0);acEl.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx));}
+    else if(e.key==="Enter"&&acFiltered[acIdx]){e.preventDefault();acPick(acFiltered[acIdx]);return;}
+    else if(e.key==="Escape"){e.preventDefault();acClose();return;}
+  }
+});
+document.addEventListener("blur",e=>{if(e.target.classList.contains("ac-in"))setTimeout(acClose,150);},true);
+
+// Helper: just add "ac-in" class + onEnter to any input
+function mentionInput(inputEl,onEnter){
+  inputEl.classList.add("ac-in");
+  if(onEnter)inputEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&!acOpen){e.preventDefault();onEnter();}});
+  return inputEl;
 }
 function tSt(t){return t.st||(t.done?"done":"todo");}
 // Backward compat: convert old notes array to single string
@@ -694,7 +696,7 @@ function mkRow(p){
     // Add task input
     const tir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"4px",position:"relative",zIndex:"60",overflow:"visible"}});
     const tiInput=h("input",{id:"ti",value:s.nk,placeholder:"+ Ajouter une tâche…",style:{width:"100%",fontSize:"13px",padding:"5px 8px",border:"1.5px solid var(--border)",borderRadius:"6px",outline:"none",fontFamily:"inherit",color:"var(--text)",background:"var(--card)"},onInput:e=>{s.nk=e.target.value;},onFocus:e=>{e.target.style.borderColor="var(--accent)";},onBlur:e=>{e.target.style.borderColor="var(--border)";}});
-    tir.append(mkMentionInput(tiInput,atk));
+    tir.append(mentionInput(tiInput,atk));
     panel.append(tir);
 
     // Notes
@@ -882,7 +884,7 @@ function R(){
   // Quick input
   const qi=h("div",{className:"quick"});
   const qiInput=h("input",{id:"qi",placeholder:"Ajouter une tâche…",value:s.an,onInput:e=>{s.an=e.target.value;}});
-  qi.append(mkMentionInput(qiInput,qadd));
+  qi.append(mentionInput(qiInput,qadd));
   w.append(qi);
 
   // Selection bar
