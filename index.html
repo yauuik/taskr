@@ -418,10 +418,14 @@ function mkRow(p){
     row.addEventListener("mousedown",e=>{
       if(e.button!==0)return;
       if(e.target.closest(".chk,.bx,.bx-s,.rm,.btn-t"))return;
+      e.preventDefault();
       const startY=e.clientY;const startX=e.clientX;
       pendingDrag={startY,startX,started:false};
+      document.body.style.userSelect="none";
+      document.body.style.webkitUserSelect="none";
       const onMove2=ev=>{
         if(!pendingDrag)return;
+        ev.preventDefault();
         const dx=ev.clientX-startX,dy=ev.clientY-startY;
         if(Math.abs(dx)+Math.abs(dy)>5&&!pendingDrag.started){
           pendingDrag.started=true;
@@ -431,8 +435,10 @@ function mkRow(p){
       const onUp2=()=>{
         document.removeEventListener("mousemove",onMove2);
         document.removeEventListener("mouseup",onUp2);
+        document.body.style.userSelect="";
+        document.body.style.webkitUserSelect="";
+        window.getSelection()?.removeAllRanges();
         if(pendingDrag&&!pendingDrag.started){
-          // Was a click, not a drag — open edit
           s.ed=p.id;s.nk="";s.noteEdit=false;R();
         }
         pendingDrag=null;
