@@ -252,20 +252,61 @@ function getNote(p){
 }
 
 // ─── Sync ───
-async function lb(){const r=await fetch(BU+"/latest",{headers:HD});if(!r.ok)throw 0;return(await r.json()).record?.projects||[];}
-async function sb(p){const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p})});if(!r.ok)throw 0;}
-function ps(p){s.p=p;s.sy="saving";slog("↑","Sauvegarde…");R();if(svT)clearTimeout(svT);svT=setTimeout(async()=>{try{await sb(p);s.sy="synced";slog("☁","Sauvegardé ("+p.length+" projets)");}catch{s.sy="error";slog("✕","Erreur sauvegarde");}R();},800);}
+const LS_KEY="taskr-data";
+async function lb(){
+  const r=await fetch(BU+"/latest",{headers:HD});
+  if(!r.ok)throw 0;
+  return(await r.json()).record?.projects||[];
+}
+async function sb(p){
+  const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p})});
+  if(!r.ok)throw 0;
+}
+function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(s.p));}catch{}}
+function lsLoad(){try{const d=localStorage.getItem(LS_KEY);return d?JSON.parse(d):null;}catch{return null;}}
 
-// up: update project — skipRender flag to avoid double render
-function up(id,patch,skipRender){
-  s.p=s.p.map(p=>p.id===id?{...p,...patch}:p);
+// Debounced cloud save (800ms)
+function save(){
+  lsSave();
   s.sy="saving";
   if(svT)clearTimeout(svT);
-  svT=setTimeout(async()=>{try{await sb(s.p);s.sy="synced";slog("☁","Synced");}catch{s.sy="error";slog("✕","Erreur sync");}R();},800);
-  if(!skipRender) R();
+  svT=setTimeout(async()=>{
+    try{await sb(s.p);s.sy="synced";slog("☁","Sauvegardé ("+s.p.length+" projets)");}
+    catch{s.sy="error";slog("✕","Erreur sauvegarde");}
+    qR();
+  },800);
 }
 
-(async()=>{try{slog("↓","Chargement…");const d=await lb();s.p=d.length?d:DF;if(!d.length)await sb(DF);s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");}catch{s.p=DF;s.sy="error";slog("✕","Erreur chargement");}s.ok=true;R();document.addEventListener("keydown",onK);})();
+// Batched render via rAF
+let rAF=null;
+function qR(){if(!rAF)rAF=requestAnimationFrame(()=>{rAF=null;R();});}
+
+// ps: replace all projects + save + render
+function ps(p){s.p=p;slog("↑","Sauvegarde…");save();qR();}
+
+// up: update single project — skipRender to avoid re-render on text input
+function up(id,patch,skipRender){
+  s.p=s.p.map(p=>p.id===id?{...p,...patch}:p);
+  save();
+  if(!skipRender) qR();
+}
+
+(async()=>{
+  try{
+    slog("↓","Chargement…");
+    const d=await lb();
+    s.p=d.length?d:DF;
+    if(!d.length)await sb(DF);
+    lsSave();
+    s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");
+  }catch{
+    // Fallback: try localStorage
+    const ls=lsLoad();
+    if(ls&&ls.length){s.p=ls;s.sy="error";slog("⚠","Offline — localStorage ("+ls.length+" projets)");}
+    else{s.p=DF;s.sy="error";slog("✕","Erreur chargement");}
+  }
+  s.ok=true;R();document.addEventListener("keydown",onK);
+})();
 
 // ─── Cycle: To Do → In Progress → Done → To Do ───
 const NEXT={"To Do":"In Progress","In Progress":"Done","Done":"To Do"};
@@ -677,7 +718,7 @@ function R(){
   syncDot.addEventListener("click",e=>{e.stopPropagation();
     if(e.altKey||e.ctrlKey||e.metaKey){window.open("https://jsonbin.io/app/bins","_blank");return;}
     slog("↑","Sync manuel…");s.sy="saving";R();
-    (async()=>{try{await sb(s.p);s.sy="synced";slog("☁","Sync OK");}catch{s.sy="error";slog("✕","Erreur sync");}R();})();
+    (async()=>{try{lsSave();await sb(s.p);s.sy="synced";slog("☁","Sync OK");}catch{s.sy="error";slog("✕","Erreur sync");}R();})();
   });
   acts.append(syncWrap);
   tb.append(acts);w.append(tb);
@@ -738,7 +779,7 @@ function R(){
 
   // Version footer
   const vf=h("div",{style:{textAlign:"center",padding:"24px 0 12px",fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",opacity:".5",letterSpacing:".02em"}});
-  vf.textContent="v1.1 · 14 mar 2026";
+  vf.textContent="v1.2 · 14 mar 2026";
   w.append(vf);
 
   a.append(w);
