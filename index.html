@@ -254,7 +254,7 @@ function richText(txt,style){
       } else if(m[2]){// @mention
         const name=m[2].slice(1);
         if(TEAM.some(t=>t.toLowerCase()===name.toLowerCase())){
-          sp.append(h("span",{className:"mention"},"@"+TEAM.find(t=>t.toLowerCase()===name.toLowerCase())));
+          sp.append(h("span",{className:"mention"},TEAM.find(t=>t.toLowerCase()===name.toLowerCase())));
         } else {
           sp.append(document.createTextNode(m[2]));
         }
