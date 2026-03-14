@@ -61,6 +61,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .bx-s.dn{border-color:var(--green);background:var(--green);color:#fff;}
 
 .crd{flex:1;min-width:0;overflow:hidden;padding:10px 14px;border-radius:8px;cursor:pointer;transition:background .12s;}
+.crd.crd-open{overflow:visible !important;cursor:default;}
 .crd:hover{background:var(--hover);}
 .crd-top{display:flex;align-items:flex-start;gap:10px;}
 .crd-name{font-size:15px;font-weight:500;line-height:1.35;flex:1;min-width:0;word-break:break-word;}
@@ -109,7 +110,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .row-urgent .crd-name{color:var(--red) !important;font-weight:700;}
 .row-urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
 .ac-wrap{position:relative;}
-.ac-list{position:absolute;left:0;right:0;top:100%;margin-top:2px;background:var(--card);border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:100;max-height:160px;overflow-y:auto;display:none;}
+.ac-list{position:absolute;left:0;right:0;top:100%;margin-top:2px;background:var(--card);border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:200;max-height:160px;overflow-y:auto;display:none;}
 .ac-list.open{display:block;}
 .ac-item{padding:5px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .ac-item:hover,.ac-item.sel{background:var(--hover);}
@@ -353,9 +354,9 @@ function mkMentionInput(inputEl,onEnter){
     inputEl.setSelectionRange(newPos,newPos);
   }
 
-  inputEl.addEventListener("input",()=>{
+  function checkMention(){
     const v=inputEl.value;
-    const cur=inputEl.selectionStart||v.length;
+    const cur=inputEl.selectionStart!=null?inputEl.selectionStart:v.length;
     const before=v.slice(0,cur);
     const atIdx=before.lastIndexOf("@");
     if(atIdx>=0&&(atIdx===0||before[atIdx-1]===" ")){
@@ -363,7 +364,9 @@ function mkMentionInput(inputEl,onEnter){
       if(!/\s/.test(q))openAc(q);
       else closeAc();
     } else closeAc();
-  });
+  }
+  inputEl.addEventListener("input",checkMention);
+  inputEl.addEventListener("keyup",checkMention);
   inputEl.addEventListener("keydown",e=>{
     if(acOpen){
       if(e.key==="ArrowDown"){e.preventDefault();acIdx=Math.min(acIdx+1,acFiltered.length-1);list.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx));}
@@ -634,7 +637,7 @@ function mkRow(p){
 
   // ═══ EXPANDED STATE ═══
   if(isOpen){
-    const c=h("div",{className:"crd",style:{cursor:"default",background:"var(--card)",overflow:"visible"}});
+    const c=h("div",{className:"crd crd-open",style:{background:"var(--card)"}});
     c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
     // Same top row as collapsed — name is contentEditable (no shift)
@@ -677,10 +680,10 @@ function mkRow(p){
     }
 
     // ─── Edit panel below ───
-    const panel=h("div",{style:{marginTop:"8px",paddingTop:"8px",borderTop:"1px solid var(--border)"}});
+    const panel=h("div",{style:{marginTop:"8px",paddingTop:"8px",borderTop:"1px solid var(--border)",position:"relative",zIndex:"50",overflow:"visible"}});
 
     // Add task input
-    const tir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"4px"}});
+    const tir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"4px",position:"relative",zIndex:"60",overflow:"visible"}});
     const tiInput=h("input",{id:"ti",value:s.nk,placeholder:"+ Ajouter une tâche…",style:{width:"100%",fontSize:"13px",padding:"5px 8px",border:"1.5px solid var(--border)",borderRadius:"6px",outline:"none",fontFamily:"inherit",color:"var(--text)",background:"var(--card)"},onInput:e=>{s.nk=e.target.value;},onFocus:e=>{e.target.style.borderColor="var(--accent)";},onBlur:e=>{e.target.style.borderColor="var(--border)";}});
     tir.append(mkMentionInput(tiInput,atk));
     panel.append(tir);
