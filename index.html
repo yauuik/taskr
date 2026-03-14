@@ -709,7 +709,7 @@ function R(){
     const cards=h("div",{className:"cards"});td2.forEach(p=>cards.append(mkRow(p)));w.append(cards);
   }
   if(dn.length){
-    w.append(mkSec("Terminé","#00C875",dn.length,true,s.doneOpen,()=>{s.doneOpen=!s.doneOpen;R();}));
+    w.append(mkSec("Done","#00C875",dn.length,true,s.doneOpen,()=>{s.doneOpen=!s.doneOpen;R();}));
     if(s.doneOpen){const cards=h("div",{className:"cards"});dn.forEach(p=>cards.append(mkRow(p)));w.append(cards);}
   }
   if(hid.length){
