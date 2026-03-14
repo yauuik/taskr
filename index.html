@@ -888,7 +888,7 @@ function R(){
 
   // Sections
   if(ip.length){
-    const ipWrap=h("div",{style:{background:"rgba(253,171,61,.04)",borderRadius:"10px",padding:"6px 10px",margin:"0 -10px"}});
+    const ipWrap=h("div",{style:{background:"rgba(253,171,61,.04)",borderRadius:"10px",padding:"6px 10px",margin:"0 -10px",overflow:"visible"}});
     ipWrap.append(mkSec("In Progress","#FDAB3D",ip.length));
     const cards=h("div",{className:"cards"});ip.forEach(p=>cards.append(mkRow(p)));ipWrap.append(cards);
     w.append(ipWrap);
