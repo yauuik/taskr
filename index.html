@@ -333,6 +333,10 @@ function mkRow(p){
   // Drag & Drop — To Do only, collapsed only
   const clearDO=()=>document.querySelectorAll(".row.drag-over-above,.row.drag-over-below").forEach(r=>{r.classList.remove("drag-over-above","drag-over-below");});
   if(isTodo&&!isOpen){
+    row.draggable=true;
+    row.style.cursor="grab";
+    row.addEventListener("dragstart",e=>{dragId=p.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setDragImage(row,0,0);row.classList.add("dragging");});
+    row.addEventListener("dragend",()=>{dragId=null;row.classList.remove("dragging");clearDO();});
     row.addEventListener("dragover",e=>{e.preventDefault();clearDO();
       const fi=s.p.findIndex(x=>x.id===dragId),ti=s.p.findIndex(x=>x.id===p.id);
       row.classList.add(fi<ti?"drag-over-below":"drag-over-above");
@@ -341,9 +345,6 @@ function mkRow(p){
     row.addEventListener("drop",e=>{e.preventDefault();clearDO();reorder(dragId,p.id);dragId=null;});
     const grip=h("div",{className:"grip"});
     grip.textContent="⠿";
-    grip.draggable=true;
-    grip.addEventListener("dragstart",e=>{dragId=p.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setDragImage(row,0,0);row.classList.add("dragging");});
-    grip.addEventListener("dragend",()=>{dragId=null;row.classList.remove("dragging");clearDO();});
     grip.addEventListener("touchstart",e=>{
       touchCurId=p.id;
       touchClone=row.cloneNode(true);touchClone.style.cssText="position:fixed;left:0;right:0;z-index:9999;opacity:.85;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.12);background:rgba(97,97,255,.06);border-radius:8px;border:1.5px solid rgba(97,97,255,.2);";
