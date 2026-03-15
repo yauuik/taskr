@@ -1313,10 +1313,13 @@ function rSett(){
   m.append(h("div",{className:"mod-hdr"},h("h3",{},"Réglages"),h("button",{className:"mod-x",onClick:()=>{s.sett=false;R();}},"✕")));
 
   // Toggle row helper
-  function toggleRow(label,desc,key,def){
+  function toggleRow(label,desc,key,def,badge){
     const row=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid var(--border)"}});
     const left=h("div",{});
-    left.append(h("div",{style:{fontSize:"14px",fontWeight:"500",color:"var(--text)"}},label));
+    const titleRow=h("div",{style:{display:"flex",alignItems:"center",gap:"6px"}});
+    titleRow.append(h("span",{style:{fontSize:"14px",fontWeight:"500",color:"var(--text)"}},label));
+    if(badge)titleRow.append(h("span",{style:{fontSize:"9px",fontWeight:"700",color:"var(--accent)",background:"rgba(97,97,255,.1)",padding:"1px 6px",borderRadius:"8px",textTransform:"uppercase",letterSpacing:".04em"}},badge));
+    left.append(titleRow);
     if(desc)left.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}},desc));
     row.append(left);
     const val=settings[key]!=null?settings[key]:def;
@@ -1332,7 +1335,7 @@ function rSett(){
     return row;
   }
 
-  m.append(toggleRow("Flatpickr","Calendrier stylisé au lieu du natif","flatpickr",false));
+  m.append(toggleRow("Flatpickr","Calendrier stylisé au lieu du natif","flatpickr",false,"beta"));
 
   // Version
   m.append(h("div",{style:{textAlign:"center",paddingTop:"16px",fontSize:"10px",color:"var(--muted)",fontFamily:"monospace"}},"Task.r v1.3"));
