@@ -372,19 +372,42 @@ function acCheck(el,wrap){
 // Bind mention autocomplete on an input — wrap is the container for the dropdown
 function mentionInput(inputEl,onEnter){
   const wrap=h("div",{style:{flex:"1",position:"relative"}});
-  wrap.append(inputEl);
-  inputEl.addEventListener("input",()=>acCheck(inputEl,wrap));
-  inputEl.addEventListener("keyup",()=>acCheck(inputEl,wrap));
+  const preview=h("div",{style:{display:"none",flexWrap:"wrap",gap:"4px",padding:"3px 0"}});
+  wrap.append(inputEl,preview);
+
+  function updatePreview(){
+    const v=inputEl.value;
+    const mentions=[];
+    const re=new RegExp(NAME_RE.source,"g");
+    let m;
+    while((m=re.exec(v))!==null){
+      const match=TEAM.find(t=>t.toLowerCase()===m[1].toLowerCase());
+      if(match&&!mentions.includes(match))mentions.push(match);
+    }
+    const urgent=v.includes("!!!");
+    preview.innerHTML="";
+    if(!mentions.length&&!urgent){preview.style.display="none";return;}
+    preview.style.display="flex";
+    mentions.forEach(name=>{
+      preview.append(h("span",{className:"mention",style:{fontSize:"11px"}},name));
+    });
+    if(urgent)preview.append(h("span",{style:{fontSize:"10px",fontWeight:"700",color:"var(--red)",background:"rgba(226,68,92,.1)",padding:"1px 6px",borderRadius:"8px"}},"urgent"));
+  }
+
+  inputEl.addEventListener("input",()=>{acCheck(inputEl,wrap);updatePreview();});
+  inputEl.addEventListener("keyup",()=>{acCheck(inputEl,wrap);updatePreview();});
   inputEl.addEventListener("keydown",e=>{
     if(acOpen2){
       if(e.key==="ArrowDown"){e.preventDefault();acIdx2=Math.min(acIdx2+1,acFiltered2.length-1);if(acList)acList.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
       else if(e.key==="ArrowUp"){e.preventDefault();acIdx2=Math.max(acIdx2-1,0);if(acList)acList.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
-      else if(e.key==="Enter"&&acFiltered2[acIdx2]){e.preventDefault();e.stopImmediatePropagation();acPick(acFiltered2[acIdx2]);return;}
+      else if(e.key==="Enter"&&acFiltered2[acIdx2]){e.preventDefault();e.stopImmediatePropagation();acPick(acFiltered2[acIdx2]);updatePreview();return;}
       else if(e.key==="Escape"){e.preventDefault();acClose();return;}
     }
     if(!acOpen2&&e.key==="Enter"&&onEnter){e.preventDefault();onEnter();}
   });
   inputEl.addEventListener("blur",()=>setTimeout(acClose,250));
+  // Init preview if value already has mentions
+  requestAnimationFrame(updatePreview);
   return wrap;
 }
 function tSt(t){return t.st||(t.done?"done":"todo");}
