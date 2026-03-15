@@ -692,8 +692,34 @@ function mkRow(p){
     });
     const grip=h("div",{className:"grip"});
     grip.textContent="⠿";
-    grip.addEventListener("touchstart",e=>{startDrag(e.touches[0].clientY);},{passive:true});
     row.append(grip);
+    // Touch drag from entire row (with threshold to distinguish tap vs drag)
+    row.addEventListener("touchstart",e=>{
+      if(e.target.closest(".chk,.bx,.bx-s,.rm,.btn-t"))return;
+      const t=e.touches[0];
+      const startY=t.clientY,startX=t.clientX;
+      let started=false;
+      const onMove=ev=>{
+        if(started)return;
+        const dx=ev.touches[0].clientX-startX,dy=ev.touches[0].clientY-startY;
+        if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)){
+          started=true;
+          ev.preventDefault();
+          startDrag(startY);
+        }
+      };
+      const onEnd=()=>{
+        document.removeEventListener("touchmove",onMove);
+        document.removeEventListener("touchend",onEnd);
+        document.removeEventListener("touchcancel",onEnd);
+        if(!started){
+          s.ed=p.id;s.nk="";s.noteEdit=false;R();
+        }
+      };
+      document.addEventListener("touchmove",onMove,{passive:false});
+      document.addEventListener("touchend",onEnd);
+      document.addEventListener("touchcancel",onEnd);
+    },{passive:true});
   }
 
   // Checkbox
