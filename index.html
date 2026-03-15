@@ -320,11 +320,12 @@ function richText(txt,style){
 
 // ─── ContentEditable mention system — @Name becomes inline chips ───
 let acTarget=null,acOpen2=false,acIdx2=0,acFiltered2=[],acList=null;
+let acSavedText="",acSavedAtIdx=-1;// saved when dropdown opens
 
 function acClose(){
   acOpen2=false;
   if(acList){acList.remove();acList=null;}
-  acTarget=null;
+  acTarget=null;acSavedAtIdx=-1;
   if(s._pendingR){s._pendingR=false;R();}
 }
 
@@ -403,19 +404,37 @@ function acShowCE(q,el,wrap){
   acFiltered2.forEach((name,i)=>{
     const it=h("div",{className:"ac-item"+(i===0?" sel":"")});
     it.append(h("div",{className:"ac-av"},name[0].toUpperCase()),h("span",{},name));
-    const pick=e=>{e.preventDefault();ceInsertChip(el,name);if(wrap._onInput)wrap._onInput(ceVal(el));acClose();};
+    const pick=e=>{e.preventDefault();e.stopPropagation();acPickText(el,name,wrap);};
     it.addEventListener("mousedown",pick);
-    it.addEventListener("touchstart",pick);
+    it.addEventListener("touchend",pick);
     acList.append(it);
   });
   wrap.append(acList);
 }
 
+// Pick using saved text (no selection needed — works on mobile)
+function acPickText(el,name,wrap){
+  if(acSavedAtIdx<0){acClose();return;}
+  // Find the @query in saved text and replace with @Name
+  const before=acSavedText.slice(0,acSavedAtIdx);
+  // Find end of @query (next space or end)
+  const afterAt=acSavedText.slice(acSavedAtIdx);
+  const spaceIdx=afterAt.indexOf(" ");
+  const after=spaceIdx>=0?acSavedText.slice(acSavedAtIdx+spaceIdx):"";
+  const newText=before+"@"+name+" "+after;
+  ceSet(el,newText);
+  if(wrap._onInput)wrap._onInput(ceVal(el));
+  acClose();
+  ceEnd(el);
+}
+
 // Check for @query before cursor
 function acCheckCE(el,wrap){
   const before=ceBefore(el);
+  acSavedText=ceVal(el);
   const atIdx=before.lastIndexOf("@");
   if(atIdx>=0&&(atIdx===0||before[atIdx-1]===" "||before[atIdx-1]==="\u00A0")){
+    acSavedAtIdx=atIdx;
     const q=before.slice(atIdx+1);
     if(!/\s/.test(q)){acShowCE(q,el,wrap);return;}
   }
@@ -440,7 +459,7 @@ function mentionField(opts){
     if(acOpen2){
       if(e.key==="ArrowDown"){e.preventDefault();acIdx2=Math.min(acIdx2+1,acFiltered2.length-1);if(acList)acList.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
       else if(e.key==="ArrowUp"){e.preventDefault();acIdx2=Math.max(acIdx2-1,0);if(acList)acList.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
-      else if(e.key==="Enter"&&acFiltered2[acIdx2]){e.preventDefault();e.stopImmediatePropagation();ceInsertChip(ed,acFiltered2[acIdx2]);if(opts.onInput)opts.onInput(ceVal(ed));acClose();return;}
+      else if(e.key==="Enter"&&acFiltered2[acIdx2]){e.preventDefault();e.stopImmediatePropagation();acPickText(ed,acFiltered2[acIdx2],wrap);return;}
       else if(e.key==="Escape"){e.preventDefault();acClose();return;}
     }
     if(e.key==="Enter"&&!acOpen2){e.preventDefault();if(opts.onEnter)opts.onEnter();}
