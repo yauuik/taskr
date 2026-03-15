@@ -1017,9 +1017,10 @@ function mkRow(p){
     panel.append(noteWrap);
 
     // Footer
-    const ft=h("div",{style:{display:"flex",justifyContent:"flex-end",gap:"8px",paddingTop:"6px",marginTop:"6px"}});
+    const ft=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:"6px",marginTop:"6px"}});
     ft.append(
       h("button",{className:"btn-t",style:{color:"var(--red)",fontSize:"10px",padding:"2px 6px",minHeight:"auto"},onClick:()=>cfm("Supprimer ce projet ?",()=>{ps(s.p.filter(x=>x.id!==p.id));s.ed=null;})},"Supprimer"),
+      h("button",{style:{background:"none",border:"1.5px solid var(--border)",borderRadius:"6px",cursor:"pointer",padding:"4px 12px",fontSize:"11px",fontWeight:"500",color:"var(--sec)",fontFamily:"inherit"},onClick:()=>{s.ed=null;s.noteEdit=false;R();}},"Fermer ✕"),
     );
     panel.append(ft);
     c.append(panel);
