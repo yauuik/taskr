@@ -102,10 +102,10 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .btn-t:hover{color:var(--sec);}
 .empty{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
 .mention{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:10px;background:rgba(103,104,121,.08);color:var(--sec);font-size:inherit;font-weight:600;white-space:nowrap;line-height:1.4;}
-.it.urgent{background:rgba(226,68,92,.05);border-radius:4px;margin:0 -4px;padding-left:4px;padding-right:4px;color:var(--red);font-weight:700;border-left:3px solid var(--red);}
+.it.urgent{background:rgba(226,68,92,.05);border-radius:4px;margin:0 -4px;padding-left:4px;padding-right:4px;color:var(--red);font-weight:700;}
 .it.urgent .bx-s{border-color:var(--red);}
 .it.urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
-.row-urgent{background:rgba(226,68,92,.04) !important;border-radius:8px;border-left:3px solid var(--red);}
+.row-urgent{background:rgba(226,68,92,.04) !important;border-radius:8px;}
 .row-urgent .crd-name{color:var(--red) !important;font-weight:700;}
 .row-urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
 .ac-list{position:absolute;left:0;right:0;top:100%;margin-top:2px;background:var(--card);border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:9999;max-height:160px;overflow-y:auto;}
@@ -891,8 +891,9 @@ function R(){
   const scM={synced:{c:"var(--green)",t:"✓"},saving:{c:"var(--amber)",t:"⟳"},error:{c:"var(--red)",t:"✕"},loading:{c:"var(--blue)",t:"…"}};
   const sc=scM[s.sy]||scM.synced;
 
-  const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden);
-  const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden);
+  const urgSort=(a,b)=>{const ua=a.name.includes("!!!")?0:1;const ub=b.name.includes("!!!")?0:1;return ua-ub;};
+  const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden).sort(urgSort);
+  const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden).sort(urgSort);
   const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
   const hid=s.p.filter(p=>p.hidden);
 
