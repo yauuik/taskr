@@ -109,8 +109,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .row-urgent{background:rgba(226,68,92,.04) !important;}
 .row-urgent .crd-name{color:var(--red) !important;font-weight:700;}
 .row-urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
-.ac-list{background:var(--card);border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:9999;max-height:160px;overflow-y:auto;display:none;}
-.ac-list.open{display:block;}
+.ac-list{position:absolute;left:0;right:0;top:100%;margin-top:2px;background:var(--card);border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:9999;max-height:160px;overflow-y:auto;}
 .ac-item{padding:5px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .ac-item:hover,.ac-item.sel{background:var(--hover);}
 .ac-item .ac-av{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -318,29 +317,29 @@ function richText(txt,style){
 }
 
 // ─── Global mention autocomplete ───
-const acEl=document.createElement("div");
-acEl.className="ac-list";
-acEl.style.position="fixed";
-document.body.append(acEl);
-let acTarget=null,acOpen2=false,acIdx2=0,acFiltered2=[];
+let acTarget=null,acOpen2=false,acIdx2=0,acFiltered2=[],acList=null;
 
-function acClose(){acOpen2=false;acEl.classList.remove("open");acEl.innerHTML="";acTarget=null;}
-function acShow(q,el){
+function acClose(){
+  acOpen2=false;
+  if(acList){acList.remove();acList=null;}
+  acTarget=null;
+}
+function acShow(q,el,wrap){
   acFiltered2=TEAM.filter(t=>t.toLowerCase().startsWith(q.toLowerCase()));
   if(!acFiltered2.length){acClose();return;}
   acTarget=el;acOpen2=true;acIdx2=0;
-  acEl.innerHTML="";
+  if(acList)acList.remove();
+  acList=document.createElement("div");
+  acList.className="ac-list open";
   acFiltered2.forEach((name,i)=>{
     const it=h("div",{className:"ac-item"+(i===0?" sel":"")});
     it.append(h("div",{className:"ac-av"},name[0].toUpperCase()),h("span",{},name));
     it.addEventListener("mousedown",e=>{e.preventDefault();acPick(name);});
-    acEl.append(it);
+    it.addEventListener("touchstart",e=>{e.preventDefault();acPick(name);});
+    acList.append(it);
   });
-  const r=el.getBoundingClientRect();
-  acEl.style.left=r.left+"px";acEl.style.width=r.width+"px";
-  if(window.innerHeight-r.bottom>170){acEl.style.top=(r.bottom+2)+"px";acEl.style.bottom="auto";}
-  else{acEl.style.bottom=(window.innerHeight-r.top+2)+"px";acEl.style.top="auto";}
-  acEl.classList.add("open");
+  wrap.style.position="relative";
+  wrap.append(acList);
 }
 function acPick(name){
   if(!acTarget)return;
@@ -355,35 +354,37 @@ function acPick(name){
   acClose();
   el.focus();
   const np=atIdx+name.length+2;
-  el.setSelectionRange(np,np);
+  try{el.setSelectionRange(np,np);}catch{}
 }
-function acCheck(el){
+function acCheck(el,wrap){
   const v=el.value;
   const cur=el.selectionStart!=null?el.selectionStart:v.length;
   const before=v.slice(0,cur);
   const atIdx=before.lastIndexOf("@");
   if(atIdx>=0&&(atIdx===0||before[atIdx-1]===" ")){
     const q=before.slice(atIdx+1);
-    if(!/\s/.test(q)){acShow(q,el);return;}
+    if(!/\s/.test(q)){acShow(q,el,wrap);return;}
   }
   acClose();
 }
 
-// Bind mention autocomplete directly on an input + optional Enter handler
+// Bind mention autocomplete on an input — wrap is the container for the dropdown
 function mentionInput(inputEl,onEnter){
-  inputEl.addEventListener("input",()=>acCheck(inputEl));
-  inputEl.addEventListener("keyup",()=>acCheck(inputEl));
+  const wrap=h("div",{style:{flex:"1",position:"relative"}});
+  wrap.append(inputEl);
+  inputEl.addEventListener("input",()=>acCheck(inputEl,wrap));
+  inputEl.addEventListener("keyup",()=>acCheck(inputEl,wrap));
   inputEl.addEventListener("keydown",e=>{
     if(acOpen2){
-      if(e.key==="ArrowDown"){e.preventDefault();acIdx2=Math.min(acIdx2+1,acFiltered2.length-1);acEl.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
-      else if(e.key==="ArrowUp"){e.preventDefault();acIdx2=Math.max(acIdx2-1,0);acEl.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
+      if(e.key==="ArrowDown"){e.preventDefault();acIdx2=Math.min(acIdx2+1,acFiltered2.length-1);if(acList)acList.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
+      else if(e.key==="ArrowUp"){e.preventDefault();acIdx2=Math.max(acIdx2-1,0);if(acList)acList.querySelectorAll(".ac-item").forEach((it,i)=>it.classList.toggle("sel",i===acIdx2));}
       else if(e.key==="Enter"&&acFiltered2[acIdx2]){e.preventDefault();e.stopImmediatePropagation();acPick(acFiltered2[acIdx2]);return;}
       else if(e.key==="Escape"){e.preventDefault();acClose();return;}
     }
     if(!acOpen2&&e.key==="Enter"&&onEnter){e.preventDefault();onEnter();}
   });
   inputEl.addEventListener("blur",()=>setTimeout(acClose,250));
-  return inputEl;
+  return wrap;
 }
 function tSt(t){return t.st||(t.done?"done":"todo");}
 // Backward compat: convert old notes array to single string
@@ -646,10 +647,10 @@ function mkRow(p){
 
     // Same top row as collapsed — name is editable input with @mention
     const top=h("div",{className:"crd-top"});
-    const nameIn=h("input",{id:"ed-name",value:p.name,style:{fontSize:"15px",fontWeight:"500",lineHeight:"1.35",flex:"1",minWidth:"0",border:"none",outline:"none",background:"transparent",fontFamily:"inherit",color:isDone?"var(--muted)":"var(--text)",padding:"0",margin:"0"},onInput:e=>up(p.id,{name:e.target.value},true)});
-    mentionInput(nameIn);
+    const nameIn=h("input",{id:"ed-name",value:p.name,style:{fontSize:"15px",fontWeight:"500",lineHeight:"1.35",width:"100%",minWidth:"0",border:"none",outline:"none",background:"transparent",fontFamily:"inherit",color:isDone?"var(--muted)":"var(--text)",padding:"0",margin:"0"},onInput:e=>up(p.id,{name:e.target.value},true)});
+    const nameWrap=mentionInput(nameIn);
     requestAnimationFrame(()=>{nameIn.focus();nameIn.selectionStart=nameIn.selectionEnd=nameIn.value.length;});
-    top.append(nameIn);
+    top.append(nameWrap);
     const meta=h("div",{className:"meta"});
     if(ts.length){
       const pg=h("div",{className:"prog"});
