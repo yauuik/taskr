@@ -220,6 +220,7 @@ function onDragEnd(){
   document.removeEventListener("mouseup",onDragEnd);
   document.removeEventListener("touchmove",onDragMove);
   document.removeEventListener("touchend",onDragEnd);
+  document.removeEventListener("touchcancel",onDragEnd);
   dragClone.remove();dragClone=null;
   // Find active drop line to determine target
   const active=document.querySelector(".drop-line.active");
@@ -655,6 +656,7 @@ function mkRow(p){
       document.addEventListener("mouseup",onDragEnd);
       document.addEventListener("touchmove",onDragMove,{passive:false});
       document.addEventListener("touchend",onDragEnd);
+      document.addEventListener("touchcancel",onDragEnd);
     };
     // Drag from anywhere on the row — distinguish click vs drag with 5px threshold
     row.addEventListener("mousedown",e=>{
@@ -859,6 +861,11 @@ function R(){
   // Defer re-render while mention dropdown is open or cursor being positioned
   if(acOpen2){s._pendingR=true;return;}
   s._pendingR=false;
+
+  // Clean up any orphan drag artifacts
+  document.querySelectorAll(".drop-line").forEach(d=>d.remove());
+  document.querySelectorAll(".drag-clone").forEach(d=>d.remove());
+  if(dragClone){dragClone.remove();dragClone=null;dragId=null;lastDragOver=null;document.body.style.userSelect="";}
 
   // Skip re-render of modal if editing name (preserve focus)
   const activeEl=document.activeElement;
