@@ -932,6 +932,62 @@ function mkRow(p){
       return b;
     }
     tb.append(tbBtn("B","bold"),tbBtn("I","italic"),tbBtn("—","insertHorizontalRule"),tbBtn("• Liste","insertUnorderedList"),tbBtn("1. Liste","insertOrderedList"));
+    // Expand button
+    const expBtn=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"3px 6px",borderRadius:"4px",fontSize:"12px",color:"var(--sec)",fontFamily:"inherit",lineHeight:"1",marginLeft:"auto"}});
+    expBtn.textContent="⛶";
+    expBtn.title="Agrandir";
+    expBtn.addEventListener("mousedown",e=>e.preventDefault());
+    expBtn.addEventListener("click",e=>{
+      e.preventDefault();e.stopPropagation();
+      // Open note in full overlay
+      const ov=h("div",{className:"ov"});
+      let ovDown=false;
+      ov.addEventListener("mousedown",ev=>{ovDown=(ev.target===ov);});
+      ov.addEventListener("mouseup",ev=>{if(ovDown&&ev.target===ov)ov.remove();ovDown=false;});
+      ov.addEventListener("touchend",ev=>{if(ev.target===ov)ov.remove();});
+      const m=h("div",{className:"mod",style:{maxWidth:"800px",display:"flex",flexDirection:"column",overflow:"hidden",height:"90vh"},onClick:ev=>ev.stopPropagation()});
+      m.append(h("div",{className:"mod-hdr"},
+        h("h3",{},p.name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()||"Note"),
+        h("button",{className:"mod-x",onClick:()=>ov.remove()},"✕")
+      ));
+      // Full toolbar
+      const tb2=h("div",{style:{display:"flex",gap:"2px",padding:"6px 8px",borderBottom:"1px solid var(--border)",background:"var(--hover)",flexShrink:"0"}});
+      function tb2Btn(label,cmd,val){
+        const b=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"4px 8px",borderRadius:"4px",fontSize:"13px",fontWeight:"600",color:"var(--sec)",fontFamily:"inherit",lineHeight:"1"}});
+        b.textContent=label;
+        b.addEventListener("mousedown",ev=>ev.preventDefault());
+        b.addEventListener("click",ev=>{
+          ev.preventDefault();
+          const ed=m.querySelector("[contenteditable]");
+          if(ed){ed.focus();document.execCommand(cmd,false,val||null);}
+        });
+        return b;
+      }
+      tb2.append(tb2Btn("B","bold"),tb2Btn("I","italic"),tb2Btn("U","underline"),tb2Btn("—","insertHorizontalRule"),tb2Btn("• Liste","insertUnorderedList"),tb2Btn("1. Liste","insertOrderedList"));
+      m.append(tb2);
+      // Full editor
+      const fullNote=h("div",{contentEditable:"true",style:{padding:"14px 16px",fontSize:"13px",fontFamily:"inherit",lineHeight:"1.7",color:"var(--text)",outline:"none",flex:"1",overflowY:"auto",wordBreak:"break-word"}});
+      const curVal=getNote(p);
+      if(curVal){
+        if(curVal.includes("<")&&curVal.includes(">"))fullNote.innerHTML=curVal;
+        else fullNote.innerHTML=curVal.replace(/\n/g,"<br>");
+      }
+      fullNote.dataset.ph="Notes, liens, idées…";
+      fullNote.addEventListener("input",()=>{
+        up(p.id,{note:fullNote.innerHTML},true);
+        // Sync back to inline editor
+        noteDiv.innerHTML=fullNote.innerHTML;
+      });
+      fullNote.addEventListener("paste",ev2=>{
+        const html2=(ev2.clipboardData||window.clipboardData).getData("text/html");
+        if(html2){ev2.preventDefault();document.execCommand("insertHTML",false,html2.replace(/font-size\s*:\s*[^;"']+;?/gi,"").replace(/line-height\s*:\s*[^;"']+;?/gi,"").replace(/font-family\s*:\s*[^;"']+;?/gi,""));}
+      });
+      m.append(fullNote);
+      ov.append(m);
+      document.getElementById("app").append(ov);
+      fullNote.focus();
+    });
+    tb.append(expBtn);
     noteWrap.append(tb);
     // Editable area
     const noteDiv=h("div",{contentEditable:"true",style:{padding:"8px 10px",fontSize:"12px",fontFamily:"inherit",lineHeight:"1.6",color:"var(--text)",outline:"none",minHeight:"150px",maxHeight:"400px",overflowY:"auto",wordBreak:"break-word"}});
