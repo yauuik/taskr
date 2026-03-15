@@ -804,15 +804,30 @@ function mkRow(p){
     const panel=h("div",{style:{marginTop:"8px",paddingTop:"8px",borderTop:"1px solid var(--border)",position:"relative",zIndex:"50",overflow:"visible"}});
 
     // Date picker
-    const dateRow=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}});
-    dateRow.append(h("span",{style:{fontSize:"11px",color:"var(--sec)",fontWeight:"600"}},"Échéance"));
-    const dateIn=h("input",{type:"date",value:p.due||"",style:{fontSize:"12px",padding:"4px 8px",border:"1.5px solid var(--border)",borderRadius:"6px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer"}});
+    const dateRow=h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px",padding:"10px 12px",background:"var(--hover)",borderRadius:"8px"}});
+    // Calendar icon
+    const calIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    calIco.setAttribute("width","16");calIco.setAttribute("height","16");calIco.setAttribute("viewBox","0 0 16 16");calIco.setAttribute("fill","none");calIco.style.color="var(--sec)";calIco.style.flexShrink="0";
+    const cr1=document.createElementNS("http://www.w3.org/2000/svg","rect");
+    cr1.setAttribute("x","1.5");cr1.setAttribute("y","3");cr1.setAttribute("width","13");cr1.setAttribute("height","11.5");cr1.setAttribute("rx","2");cr1.setAttribute("stroke","currentColor");cr1.setAttribute("stroke-width","1.5");
+    const cr2=document.createElementNS("http://www.w3.org/2000/svg","line");
+    cr2.setAttribute("x1","1.5");cr2.setAttribute("y1","7");cr2.setAttribute("x2","14.5");cr2.setAttribute("y2","7");cr2.setAttribute("stroke","currentColor");cr2.setAttribute("stroke-width","1.5");
+    const cr3=document.createElementNS("http://www.w3.org/2000/svg","line");
+    cr3.setAttribute("x1","5");cr3.setAttribute("y1","1.5");cr3.setAttribute("x2","5");cr3.setAttribute("y2","4.5");cr3.setAttribute("stroke","currentColor");cr3.setAttribute("stroke-width","1.5");cr3.setAttribute("stroke-linecap","round");
+    const cr4=document.createElementNS("http://www.w3.org/2000/svg","line");
+    cr4.setAttribute("x1","11");cr4.setAttribute("y1","1.5");cr4.setAttribute("x2","11");cr4.setAttribute("y2","4.5");cr4.setAttribute("stroke","currentColor");cr4.setAttribute("stroke-width","1.5");cr4.setAttribute("stroke-linecap","round");
+    calIco.append(cr1,cr2,cr3,cr4);
+    dateRow.append(calIco);
+    dateRow.append(h("span",{style:{fontSize:"13px",color:"var(--sec)",fontWeight:"500"}},"Échéance"));
+    const dateIn=h("input",{type:"date",value:p.due||"",style:{fontSize:"13px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer",marginLeft:"auto"}});
     dateIn.addEventListener("change",e=>up(p.id,{due:e.target.value||null}));
+    dateIn.addEventListener("focus",()=>{dateIn.style.borderColor="var(--accent)";});
+    dateIn.addEventListener("blur",()=>{dateIn.style.borderColor="var(--border)";});
     dateRow.append(dateIn);
     if(p.due){
-      dateRow.append(h("button",{className:"btn-t",style:{fontSize:"10px",padding:"2px 6px",minHeight:"auto",color:"var(--muted)"},onClick:()=>{up(p.id,{due:null});}},"✕"));
       const db2=dateBadge(p.due);
       if(db2)dateRow.append(db2);
+      dateRow.append(h("button",{style:{background:"none",border:"none",fontSize:"14px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",lineHeight:"1",marginLeft:"4px"},onClick:()=>{up(p.id,{due:null});}},"×"));
     }
     panel.append(dateRow);
 
