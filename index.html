@@ -240,7 +240,7 @@ const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
 function shortDt(d){if(!d)return"";const dt=new Date(d);const m=["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];return dt.getDate()+" "+m[dt.getMonth()];}
 // Render text with clickable links and line breaks
-// Parse task text: extract @mentions (to front) and !!! (urgent flag)
+// Parse task text: extract @mentions (to front) and !! (urgent flag)
 const NAME_RE=/@([\w\u00C0-\u024F]+)/g;
 function parseTask(txt){
   const mentions=[];
@@ -251,10 +251,10 @@ function parseTask(txt){
     const match=TEAM.find(t=>t.toLowerCase()===name.toLowerCase());
     if(match&&!mentions.includes(match))mentions.push(match);
   }
-  const urgent=txt.includes("!!!");
+  const urgent=txt.includes("!!");
   let clean=txt.replace(new RegExp(NAME_RE.source,"g"),(full,name)=>{
     return TEAM.some(t=>t.toLowerCase()===name.toLowerCase())?"":full;
-  }).replace(/!!!/g,"").replace(/\s{2,}/g," ").trim();
+  }).replace(/!!/g,"").replace(/\s{2,}/g," ").trim();
   return {mentions,urgent,clean};
 }
 
@@ -891,7 +891,7 @@ function R(){
   const scM={synced:{c:"var(--green)",t:"✓"},saving:{c:"var(--amber)",t:"⟳"},error:{c:"var(--red)",t:"✕"},loading:{c:"var(--blue)",t:"…"}};
   const sc=scM[s.sy]||scM.synced;
 
-  const urgSort=(a,b)=>{const ua=a.name.includes("!!!")?0:1;const ub=b.name.includes("!!!")?0:1;return ua-ub;};
+  const urgSort=(a,b)=>{const ua=a.name.includes("!!")?0:1;const ub=b.name.includes("!!")?0:1;return ua-ub;};
   const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden).sort(urgSort);
   const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden).sort(urgSort);
   const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
