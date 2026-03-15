@@ -1134,14 +1134,14 @@ function rExp(){
 
   const mdVal=toMd();
   const ov=h("div",{className:"ov",onClick:()=>{s.exp=false;R();}});
-  const m=h("div",{className:"mod",style:{maxWidth:"560px"},onClick:e=>e.stopPropagation()});
+  const m=h("div",{className:"mod",style:{maxWidth:"680px"},onClick:e=>e.stopPropagation()});
   m.append(h("div",{className:"mod-hdr"},h("h3",{},"Markdown"),h("button",{className:"mod-x",onClick:()=>{s.exp=false;R();}},"✕")));
 
   const info=h("div",{style:{fontSize:"11px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.4"}});
   info.textContent="Édite directement. Format : ## Statut / ### Projet / - [x] tâche done / - [/] en cours / - [ ] à faire";
   m.append(info);
 
-  const ta=h("textarea",{id:"md-edit",style:{width:"100%",padding:"14px",borderRadius:"10px",border:"1.5px solid var(--border)",fontSize:"13px",fontFamily:"monospace",lineHeight:"1.6",color:"var(--text)",background:"var(--bg)",outline:"none",resize:"vertical",minHeight:"300px",maxHeight:"60vh",transition:"border-color .15s"}});
+  const ta=h("textarea",{id:"md-edit",style:{width:"100%",padding:"14px",borderRadius:"10px",border:"1.5px solid var(--border)",fontSize:"13px",fontFamily:"monospace",lineHeight:"1.6",color:"var(--text)",background:"var(--bg)",outline:"none",resize:"vertical",minHeight:"500px",maxHeight:"80vh",transition:"border-color .15s"}});
   ta.value=mdVal;
   ta.addEventListener("focus",()=>{ta.style.borderColor="var(--accent)";});
   ta.addEventListener("blur",()=>{ta.style.borderColor="var(--border)";});
