@@ -382,7 +382,7 @@ function mentionInput(inputEl,onEnter){
     }
     if(!acOpen2&&e.key==="Enter"&&onEnter){e.preventDefault();onEnter();}
   });
-  inputEl.addEventListener("blur",()=>setTimeout(acClose,150));
+  inputEl.addEventListener("blur",()=>setTimeout(acClose,250));
   return inputEl;
 }
 function tSt(t){return t.st||(t.done?"done":"todo");}
@@ -644,14 +644,12 @@ function mkRow(p){
     const c=h("div",{className:"crd crd-open",style:{background:"var(--card)"}});
     c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
-    // Same top row as collapsed — name is contentEditable (no shift)
+    // Same top row as collapsed — name is editable input with @mention
     const top=h("div",{className:"crd-top"});
-    const nameSpan=h("span",{className:"crd-name"+(isDone?" x":""),contentEditable:"true",style:{outline:"none",cursor:"text"}});
-    nameSpan.textContent=p.name;
-    nameSpan.addEventListener("input",()=>up(p.id,{name:nameSpan.textContent.trim()},true));
-    nameSpan.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();nameSpan.blur();}});
-    requestAnimationFrame(()=>{nameSpan.focus();const sel=window.getSelection();sel.selectAllChildren(nameSpan);sel.collapseToEnd();});
-    top.append(nameSpan);
+    const nameIn=h("input",{id:"ed-name",value:p.name,style:{fontSize:"15px",fontWeight:"500",lineHeight:"1.35",flex:"1",minWidth:"0",border:"none",outline:"none",background:"transparent",fontFamily:"inherit",color:isDone?"var(--muted)":"var(--text)",padding:"0",margin:"0"},onInput:e=>up(p.id,{name:e.target.value},true)});
+    mentionInput(nameIn);
+    requestAnimationFrame(()=>{nameIn.focus();nameIn.selectionStart=nameIn.selectionEnd=nameIn.value.length;});
+    top.append(nameIn);
     const meta=h("div",{className:"meta"});
     if(ts.length){
       const pg=h("div",{className:"prog"});
