@@ -325,7 +325,7 @@ function mentionSpan(name){
   const sp=h("span",{className:"mention"});
   if(settings.mentionIcon!==false){
     const ico=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    ico.setAttribute("width","10");ico.setAttribute("height","10");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";ico.style.opacity=".6";ico.style.verticalAlign="middle";ico.style.marginTop="-1px";
+    ico.setAttribute("width","10");ico.setAttribute("height","10");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";ico.style.opacity=".6";ico.style.verticalAlign="middle";ico.style.marginTop="-2px";
     const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
     c.setAttribute("cx","8");c.setAttribute("cy","5.5");c.setAttribute("r","3");c.setAttribute("stroke","currentColor");c.setAttribute("stroke-width","1.8");
     const p=document.createElementNS("http://www.w3.org/2000/svg","path");
@@ -345,7 +345,8 @@ function richTask(txt,style){
     sp.append(document.createTextNode(" "));
   });
   const urlRe=/(https?:\/\/[^\s]+)/g;
-  const lines=clean.split("\n");
+  const capClean=clean.charAt(0).toUpperCase()+clean.slice(1);
+  const lines=capClean.split("\n");
   lines.forEach((line,li)=>{
     let last=0;
     for(const m of line.matchAll(urlRe)){
