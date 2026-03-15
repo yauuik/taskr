@@ -589,7 +589,7 @@ function xcfm(){s.cm=null;s.cf=null;R();}
 function onK(e){
   const ii=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName);
   if(e.key==="Escape"){if(s.cm)xcfm();else if(s.ed){s.ed=null;s.noteEdit=false;}else if(s.exp){s.exp=false;}else if(s.keys){s.keys=false;}else if(s.sel.size)s.sel.clear();e.preventDefault();R();return;}
-  if(e.key==="Enter"){if(s.cm){e.preventDefault();s.cf?.();xcfm();return;}if(s.keys||s.exp){e.preventDefault();s.keys=false;s.exp=false;R();return;}if(s.ed&&!ii){e.preventDefault();s.ed=null;R();return;}}
+  if(e.key==="Enter"){if(s.cm){e.preventDefault();s.cf?.();xcfm();return;}if(s.keys){e.preventDefault();s.keys=false;R();return;}if(s.ed&&!ii){e.preventDefault();s.ed=null;R();return;}}
   if(!ii&&!s.ed&&!s.exp&&!s.keys){
     if(e.key==="n"){e.preventDefault();document.querySelector(".quick .ce-field")?.focus();return;}
     if(e.key==="e"){e.preventDefault();s.exp=true;R();}
@@ -1138,20 +1138,20 @@ function rExp(){
   ov.addEventListener("mousedown",e=>{ovDown=(e.target===ov);});
   ov.addEventListener("mouseup",e=>{if(ovDown&&e.target===ov){s.exp=false;R();}ovDown=false;});
   ov.addEventListener("touchend",e=>{if(e.target===ov){s.exp=false;R();}});
-  const m=h("div",{className:"mod",style:{maxWidth:"680px"},onClick:e=>e.stopPropagation()});
+  const m=h("div",{className:"mod",style:{maxWidth:"680px",display:"flex",flexDirection:"column",overflow:"hidden"},onClick:e=>e.stopPropagation()});
   m.append(h("div",{className:"mod-hdr"},h("h3",{},"Markdown"),h("button",{className:"mod-x",onClick:()=>{s.exp=false;R();}},"✕")));
 
-  const info=h("div",{style:{fontSize:"11px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.4"}});
+  const info=h("div",{style:{fontSize:"11px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.4",flexShrink:"0"}});
   info.textContent="Édite directement. Format : ## Statut / ### Projet / - [x] tâche done / - [/] en cours / - [ ] à faire";
   m.append(info);
 
-  const ta=h("textarea",{id:"md-edit",style:{width:"100%",padding:"14px",borderRadius:"10px",border:"1.5px solid var(--border)",fontSize:"13px",fontFamily:"monospace",lineHeight:"1.6",color:"var(--text)",background:"var(--bg)",outline:"none",resize:"vertical",minHeight:"500px",maxHeight:"80vh",transition:"border-color .15s"}});
+  const ta=h("textarea",{id:"md-edit",style:{width:"100%",padding:"14px",borderRadius:"10px",border:"1.5px solid var(--border)",fontSize:"13px",fontFamily:"monospace",lineHeight:"1.6",color:"var(--text)",background:"var(--bg)",outline:"none",resize:"none",flex:"1",minHeight:"200px",overflowY:"auto",transition:"border-color .15s"}});
   ta.value=mdVal;
   ta.addEventListener("focus",()=>{ta.style.borderColor="var(--accent)";});
   ta.addEventListener("blur",()=>{ta.style.borderColor="var(--border)";});
   m.append(ta);
 
-  const btns=h("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"12px"}});
+  const btns=h("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"12px",flexShrink:"0"}});
   btns.append(
     h("button",{className:"btn btn-g",style:{fontSize:"12px"},onClick:()=>navigator.clipboard.writeText(ta.value)},"Copier"),
     h("button",{className:"btn btn-a",style:{fontSize:"12px"},onClick:()=>{
