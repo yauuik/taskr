@@ -536,7 +536,13 @@ function save(){
   svT=setTimeout(async()=>{
     try{await sb(s.p);s.sy="synced";slog("☁","Sauvegardé ("+s.p.length+" projets)");}
     catch{s.sy="error";slog("✕","Erreur sauvegarde");}
-    qR();
+    // Only re-render sync indicator, not the whole UI if editing
+    if(!s.ed){qR();}
+    else{
+      // Just update sync dot without full re-render
+      const dot=document.querySelector("[data-sync-dot]");
+      if(dot)dot.style.color=s.sy==="synced"?"var(--green)":s.sy==="error"?"var(--red)":"var(--amber)";
+    }
   },800);
 }
 
@@ -1031,6 +1037,7 @@ function R(){
   // Sync indicator with hover tooltip
   const syncWrap=h("div",{style:{position:"relative",marginLeft:"2px"}});
   const syncDot=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",width:"28px",height:"28px",color:sc.c,cursor:"pointer"}});
+  syncDot.setAttribute("data-sync-dot","1");
   // SVG sync icon
   const ssvg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   ssvg.setAttribute("width","13");ssvg.setAttribute("height","13");ssvg.setAttribute("viewBox","0 0 16 16");ssvg.setAttribute("fill","none");
