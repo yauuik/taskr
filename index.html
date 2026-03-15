@@ -333,7 +333,8 @@ function mentionSpan(name){
     ico.append(c,p);
     sp.append(ico);
   }
-  sp.append(document.createTextNode(name));
+  const displayName=name.charAt(0).toUpperCase()+name.slice(1);
+  sp.append(document.createTextNode(displayName));
   return sp;
 }
 function richTask(txt,style){
