@@ -449,12 +449,17 @@ function acPickText(el,name,wrap){
   const spaceIdx=afterAt.indexOf(" ");
   const after=spaceIdx>=0?acSavedText.slice(acSavedAtIdx+spaceIdx):"";
   const newText=before+"@"+name+" "+after;
+  // Update state first so R() won't overwrite
+  if(wrap._onInput)wrap._onInput(newText.replace(/\u00A0/g," ").trim());
+  // Clear pending R before close so DOM isn't rebuilt
+  s._pendingR=false;
+  acOpen2=false;
+  if(acList){acList.remove();acList=null;}
+  acTarget=null;acSavedAtIdx=-1;
+  // Now set content + cursor
   ceSet(el,newText);
-  if(wrap._onInput)wrap._onInput(ceVal(el));
-  acClose();
-  // Cursor right after @Name + space
   const targetOffset=acSavedAtIdx+name.length+2;
-  requestAnimationFrame(()=>ceCursorAt(el,targetOffset));
+  ceCursorAt(el,targetOffset);
 }
 
 // Check for @query before cursor
