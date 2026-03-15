@@ -323,14 +323,17 @@ function parseTask(txt){
 // Render task content: mention tags first, then clean text with links
 function mentionSpan(name){
   const sp=h("span",{className:"mention"});
-  const ico=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  ico.setAttribute("width","10");ico.setAttribute("height","10");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";ico.style.opacity=".6";
-  const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
-  c.setAttribute("cx","8");c.setAttribute("cy","5.5");c.setAttribute("r","3");c.setAttribute("stroke","currentColor");c.setAttribute("stroke-width","1.8");
-  const p=document.createElementNS("http://www.w3.org/2000/svg","path");
-  p.setAttribute("d","M2.5 14.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5");p.setAttribute("stroke","currentColor");p.setAttribute("stroke-width","1.8");p.setAttribute("stroke-linecap","round");
-  ico.append(c,p);
-  sp.append(ico,document.createTextNode(name));
+  if(settings.mentionIcon!==false){
+    const ico=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    ico.setAttribute("width","10");ico.setAttribute("height","10");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";ico.style.opacity=".6";ico.style.verticalAlign="middle";ico.style.marginTop="-1px";
+    const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx","8");c.setAttribute("cy","5.5");c.setAttribute("r","3");c.setAttribute("stroke","currentColor");c.setAttribute("stroke-width","1.8");
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d","M2.5 14.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5");p.setAttribute("stroke","currentColor");p.setAttribute("stroke-width","1.8");p.setAttribute("stroke-linecap","round");
+    ico.append(c,p);
+    sp.append(ico);
+  }
+  sp.append(document.createTextNode(name));
   return sp;
 }
 function richTask(txt,style){
@@ -1357,6 +1360,7 @@ function rSett(){
   }
 
   m.append(toggleRow("Flatpickr","Calendrier stylisé au lieu du natif","flatpickr",false,"beta"));
+  m.append(toggleRow("Icône mention","Petit icône personne dans les tags","mentionIcon",true));
 
   // Version
   m.append(h("div",{style:{textAlign:"center",paddingTop:"16px",fontSize:"10px",color:"var(--muted)",fontFamily:"monospace"}},"Task.r v1.3"));
