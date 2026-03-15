@@ -929,7 +929,7 @@ function mkRow(p){
     tb.append(tbBtn("B","bold"),tbBtn("I","italic"),tbBtn("—","insertHorizontalRule"),tbBtn("• Liste","insertUnorderedList"),tbBtn("1. Liste","insertOrderedList"));
     noteWrap.append(tb);
     // Editable area
-    const noteDiv=h("div",{contentEditable:"true",style:{padding:"8px 10px",fontSize:"10px",fontFamily:"inherit",lineHeight:"1.6",color:"var(--text)",outline:"none",minHeight:"150px",maxHeight:"400px",overflowY:"auto",wordBreak:"break-word"}});
+    const noteDiv=h("div",{contentEditable:"true",style:{padding:"8px 10px",fontSize:"11px",fontFamily:"inherit",lineHeight:"1.6",color:"var(--text)",outline:"none",minHeight:"150px",maxHeight:"400px",overflowY:"auto",wordBreak:"break-word"}});
     // Convert stored plain text to HTML (preserve line breaks)
     const noteVal=getNote(p);
     if(noteVal){
