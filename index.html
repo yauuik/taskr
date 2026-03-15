@@ -251,7 +251,31 @@ function dateBadge(dateStr){
   else if(diff<=2){color="#e67e22";bg="rgba(230,126,34,.08)";} // 1-2 days
   else if(diff<=7){color="var(--amber)";bg="rgba(253,171,61,.1)";} // this week
   const label=diff===0?"Aujourd'hui":diff===-1?"Hier":diff===1?"Demain":shortDt(dateStr);
-  return h("span",{style:{fontSize:"10px",fontWeight:"600",color,background:bg,padding:"2px 7px",borderRadius:"8px",whiteSpace:"nowrap",lineHeight:"1.4",display:"inline-flex",alignItems:"center",gap:"3px"}},"📅 "+label);
+  const ico=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  ico.setAttribute("width","11");ico.setAttribute("height","11");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";
+  const p1=document.createElementNS("http://www.w3.org/2000/svg","rect");
+  p1.setAttribute("x","1.5");p1.setAttribute("y","3");p1.setAttribute("width","13");p1.setAttribute("height","11.5");p1.setAttribute("rx","2");p1.setAttribute("stroke","currentColor");p1.setAttribute("stroke-width","1.5");
+  const p2=document.createElementNS("http://www.w3.org/2000/svg","line");
+  p2.setAttribute("x1","1.5");p2.setAttribute("y1","7");p2.setAttribute("x2","14.5");p2.setAttribute("y2","7");p2.setAttribute("stroke","currentColor");p2.setAttribute("stroke-width","1.5");
+  const p3=document.createElementNS("http://www.w3.org/2000/svg","line");
+  p3.setAttribute("x1","5");p3.setAttribute("y1","1.5");p3.setAttribute("x2","5");p3.setAttribute("y2","4.5");p3.setAttribute("stroke","currentColor");p3.setAttribute("stroke-width","1.5");p3.setAttribute("stroke-linecap","round");
+  const p4=document.createElementNS("http://www.w3.org/2000/svg","line");
+  p4.setAttribute("x1","11");p4.setAttribute("y1","1.5");p4.setAttribute("x2","11");p4.setAttribute("y2","4.5");p4.setAttribute("stroke","currentColor");p4.setAttribute("stroke-width","1.5");p4.setAttribute("stroke-linecap","round");
+  ico.append(p1,p2,p3,p4);
+  const badge=h("span",{style:{fontSize:"10px",fontWeight:"600",color,background:bg,padding:"2px 7px",borderRadius:"8px",whiteSpace:"nowrap",lineHeight:"1.4",display:"inline-flex",alignItems:"center",gap:"3px"}});
+  badge.append(ico,document.createTextNode(label));
+  return badge;
+}
+// Check if project is urgent (!! in name OR due today/overdue)
+function isUrgent(p){
+  if(p.name&&p.name.includes("!!"))return true;
+  if(p.due){
+    const dt=new Date(p.due+"T00:00:00");
+    const now=new Date();now.setHours(0,0,0,0);
+    const diff=Math.floor((dt-now)/(1000*60*60*24));
+    if(diff<=1)return true;// today, overdue, or tomorrow
+  }
+  return false;
 }
 // Parse task text: extract @mentions (to front) and !! (urgent flag)
 const NAME_RE=/@([\w\u00C0-\u024F]+)/g;
@@ -839,7 +863,7 @@ function mkRow(p){
   c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
   const {urgent:projUrgent}=parseTask(p.name);
-  if(projUrgent)row.classList.add("row-urgent");
+  if(projUrgent||isUrgent(p))row.classList.add("row-urgent");
   const top=h("div",{className:"crd-top"});
   const nameEl=richTask(p.name,{});
   nameEl.className="crd-name"+(isDone?" x":"");
@@ -921,7 +945,7 @@ function R(){
   const scM={synced:{c:"var(--green)",t:"✓"},saving:{c:"var(--amber)",t:"⟳"},error:{c:"var(--red)",t:"✕"},loading:{c:"var(--blue)",t:"…"}};
   const sc=scM[s.sy]||scM.synced;
 
-  const urgSort=(a,b)=>{const ua=a.name.includes("!!")?0:1;const ub=b.name.includes("!!")?0:1;return ua-ub;};
+  const urgSort=(a,b)=>{const ua=isUrgent(a)?0:1;const ub=isUrgent(b)?0:1;return ua-ub;};
   const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden).sort(urgSort);
   const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden).sort(urgSort);
   const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
