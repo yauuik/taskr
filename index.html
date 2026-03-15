@@ -442,6 +442,7 @@ function ceCursorAt(el,offset){
 }
 
 // Pick using saved text (no selection needed — works on mobile)
+let _blockR=false;
 function acPickText(el,name,wrap){
   if(acSavedAtIdx<0){acClose();return;}
   const before=acSavedText.slice(0,acSavedAtIdx);
@@ -449,17 +450,20 @@ function acPickText(el,name,wrap){
   const spaceIdx=afterAt.indexOf(" ");
   const after=spaceIdx>=0?acSavedText.slice(acSavedAtIdx+spaceIdx):"";
   const newText=before+"@"+name+" "+after;
-  // Update state first so R() won't overwrite
   if(wrap._onInput)wrap._onInput(newText.replace(/\u00A0/g," ").trim());
-  // Clear pending R before close so DOM isn't rebuilt
   s._pendingR=false;
   acOpen2=false;
   if(acList){acList.remove();acList=null;}
   acTarget=null;acSavedAtIdx=-1;
-  // Now set content + cursor
   ceSet(el,newText);
-  const targetOffset=acSavedAtIdx+name.length+2;
-  ceCursorAt(el,targetOffset);
+  const targetOffset=before.length+name.length+2;// before + @Name + space
+  _blockR=true;
+  el.focus();
+  setTimeout(()=>{setTimeout(()=>{
+    ceCursorAt(el,targetOffset);
+    _blockR=false;
+    if(s._pendingR){s._pendingR=false;}
+  },50);},0);
 }
 
 // Check for @query before cursor
@@ -941,8 +945,8 @@ function mkSec(label,color,count,toggle,isOpen,onToggle){
 
 // ─── Main render ───
 function R(){
-  // Defer re-render while mention dropdown is open
-  if(acOpen2){s._pendingR=true;return;}
+  // Defer re-render while mention dropdown is open or cursor being positioned
+  if(acOpen2||_blockR){s._pendingR=true;return;}
   s._pendingR=false;
 
   // Skip re-render of modal if editing name (preserve focus)
