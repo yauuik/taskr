@@ -262,6 +262,7 @@ function onDragEnd(){
 
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
+function capFirst(s){if(!s)return s;return s.charAt(0).toUpperCase()+s.slice(1);}
 function shortDt(d){if(!d)return"";const dt=new Date(d);const m=["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];return dt.getDate()+" "+m[dt.getMonth()];}
 // Date badge with smart coloring
 function dateBadge(dateStr){
@@ -345,8 +346,7 @@ function richTask(txt,style){
     sp.append(document.createTextNode(" "));
   });
   const urlRe=/(https?:\/\/[^\s]+)/g;
-  const capClean=clean.charAt(0).toUpperCase()+clean.slice(1);
-  const lines=capClean.split("\n");
+  const lines=clean.split("\n");
   lines.forEach((line,li)=>{
     let last=0;
     for(const m of line.matchAll(urlRe)){
@@ -663,11 +663,11 @@ function togT(pid,i){
 
 function qadd(){
   if(!s.an.trim())return;
-  const n={id:gid(),name:s.an.trim(),status:"To Do",tasks:[],note:""};
+  const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",tasks:[],note:""};
   ps([n,...s.p]);
   s.an="";s.nk="";
 }
-function atk(){if(!s.nk.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{tasks:[...(p.tasks||[]),{text:s.nk.trim(),st:"todo",date:td()}]});s.nk="";}
+function atk(){if(!s.nk.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{tasks:[...(p.tasks||[]),{text:capFirst(s.nk.trim()),st:"todo",date:td()}]});s.nk="";}
 function cfm(m,f){s.cm=m;s.cf=f;R();}
 function xcfm(){s.cm=null;s.cf=null;R();}
 
@@ -810,7 +810,7 @@ function mkRow(p){
     const nameWrap=mentionField({
       value:p.name,
       style:{fontSize:"15px",fontWeight:"500",background:"transparent",padding:"0"},
-      onInput:v=>up(p.id,{name:v},true),
+      onInput:v=>up(p.id,{name:capFirst(v)},true),
       onEnter:()=>{s.ed=null;s.noteEdit=false;R();},
       focusEnd:true
     });
