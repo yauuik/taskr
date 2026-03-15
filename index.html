@@ -1133,7 +1133,11 @@ function rExp(){
   }
 
   const mdVal=toMd();
-  const ov=h("div",{className:"ov",onClick:()=>{s.exp=false;R();}});
+  const ov=h("div",{className:"ov"});
+  let ovDown=false;
+  ov.addEventListener("mousedown",e=>{ovDown=(e.target===ov);});
+  ov.addEventListener("mouseup",e=>{if(ovDown&&e.target===ov){s.exp=false;R();}ovDown=false;});
+  ov.addEventListener("touchend",e=>{if(e.target===ov){s.exp=false;R();}});
   const m=h("div",{className:"mod",style:{maxWidth:"680px"},onClick:e=>e.stopPropagation()});
   m.append(h("div",{className:"mod-hdr"},h("h3",{},"Markdown"),h("button",{className:"mod-x",onClick:()=>{s.exp=false;R();}},"✕")));
 
@@ -1161,7 +1165,10 @@ function rExp(){
 }
 
 function rKeys(){
-  const ov=h("div",{className:"ov",onClick:()=>{s.keys=false;R();}});
+  const ov=h("div",{className:"ov"});
+  ov.addEventListener("mousedown",e=>{ov._down=(e.target===ov);});
+  ov.addEventListener("mouseup",e=>{if(ov._down&&e.target===ov){s.keys=false;R();}ov._down=false;});
+  ov.addEventListener("touchend",e=>{if(e.target===ov){s.keys=false;R();}});
   const m=h("div",{className:"mod",style:{maxWidth:"380px"},onClick:e=>e.stopPropagation()});
   m.append(h("div",{className:"mod-hdr"},h("h3",{},"Raccourcis"),h("button",{className:"mod-x",onClick:()=>{s.keys=false;R();}},"✕")));
   const kb=t=>h("kbd",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:"24px",padding:"2px 7px",borderRadius:"5px",background:"var(--bg)",border:"1px solid var(--border)",fontSize:"12px",fontWeight:"600",color:"var(--accent)",fontFamily:"monospace"}},t);
