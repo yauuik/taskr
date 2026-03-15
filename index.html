@@ -940,11 +940,14 @@ function mkRow(p){
     noteDiv.dataset.ph="Notes, liens, idées…";
     noteDiv.addEventListener("input",()=>{up(p.id,{note:noteDiv.innerHTML},true);});
     noteDiv.addEventListener("paste",e=>{
-      // Allow rich paste from clipboard
       const html=(e.clipboardData||window.clipboardData).getData("text/html");
-      if(!html){
+      if(html){
         e.preventDefault();
-        document.execCommand("insertText",false,(e.clipboardData||window.clipboardData).getData("text/plain"));
+        // Strip all font-size, line-height, font-family from pasted HTML
+        const clean=html.replace(/font-size\s*:\s*[^;"']+;?/gi,"")
+          .replace(/line-height\s*:\s*[^;"']+;?/gi,"")
+          .replace(/font-family\s*:\s*[^;"']+;?/gi,"");
+        document.execCommand("insertHTML",false,clean);
       }
     });
     noteDiv.addEventListener("mousedown",e=>e.stopPropagation());
