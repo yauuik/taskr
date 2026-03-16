@@ -85,6 +85,8 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .crd.crd-open{overflow:visible !important;cursor:default;}
 .row:hover{background:var(--hover);border-radius:8px;}
 .row-urgent:hover{background:rgba(226,68,92,.08) !important;}
+.done-anim .crd-name{text-decoration:line-through;color:var(--muted) !important;transition:color .3s,text-decoration .3s;}
+.done-anim{opacity:.4;transition:opacity .6s ease .2s;}
 .crd-top{display:flex;align-items:flex-start;gap:10px;}
 .crd-name{font-size:15px;font-weight:500;line-height:1.35;flex:1;min-width:0;word-break:break-word;}
 .crd-name.x{text-decoration:line-through;color:var(--muted);}
@@ -638,7 +640,13 @@ function togP(id){
   const nowD=td();
   if(next==="Done"){patch.doneAt=nowD;patch.tasks=(p.tasks||[]).map(t=>({...t,st:"done",doneAt:t.doneAt||nowD}));}
   if(next==="To Do"){delete patch.doneAt;patch.tasks=(p.tasks||[]).map(t=>{const o={...t,st:"todo"};delete o.doneAt;return o;});}
-  up(id,patch);
+  // Animate before moving to Done
+  if(next==="Done"){
+    up(id,patch,true);// save but don't render yet
+    const row=document.querySelector('[data-id="'+id+'"]');
+    if(row){row.classList.add("done-anim");setTimeout(()=>qR(),800);}
+    else qR();
+  } else up(id,patch);
 }
 
 function togT(pid,i){
@@ -669,10 +677,22 @@ function togT(pid,i){
   if(tSt(t)==="done"&&nst!=="done"&&p.status==="Done"){patch.status="In Progress";patch.doneAt=null;}
   up(pid,patch,true);
   const cur=s.p.find(x=>x.id===pid);
-  if(cur&&cur.tasks&&cur.tasks.length&&cur.tasks.every(t2=>tSt(t2)==="done")&&cur.status!=="Done"){
-    up(pid,{status:"Done",doneAt:td()});
+  const allDone=cur&&cur.tasks&&cur.tasks.length&&cur.tasks.every(t2=>tSt(t2)==="done")&&cur.status!=="Done";
+  if(nst==="done"){
+    // Animate subtask strikethrough then render
+    const rows=document.querySelectorAll('[data-id="'+pid+'"] .it');
+    if(rows[i]){
+      const sp=rows[i].querySelector("span");
+      if(sp){sp.style.textDecoration="line-through";sp.style.color="var(--muted)";sp.style.transition="color .3s";}
+      rows[i].style.opacity=".4";rows[i].style.transition="opacity .5s ease .2s";
+    }
+    setTimeout(()=>{
+      if(allDone)up(pid,{status:"Done",doneAt:td()});
+      else R();
+    },800);
   } else {
-    R();
+    if(allDone)up(pid,{status:"Done",doneAt:td()});
+    else R();
   }
 }
 
