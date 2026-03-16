@@ -183,19 +183,53 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
   .rm{opacity:0;}
   .tr:hover .rm,.nr:hover .rm{opacity:1;}
 }
-/* Mobile tweaks */
+/* Mobile tweaks — Todoist-inspired */
 @media(max-width:599px){
-  .wrap{padding-left:8px;padding-right:8px;}
-  .crd-name{word-break:break-word;}
-  .topbar h1{font-size:32px;}
+  .wrap{padding-left:12px;padding-right:12px;}
+  .topbar h1{font-size:30px;margin-bottom:4px;}
+  .quick{padding:14px 16px;margin-bottom:20px;}
   .quick input{font-size:16px;}
+
+  /* Sections */
+  .sec-hdr{margin-top:24px;margin-bottom:8px;}
   .sec-toggle{padding:8px 10px;font-size:16px;}
-  .icon-btn{width:36px;height:36px;font-size:15px;}
+
+  /* Rows — more vertical breathing room + separator */
+  .cards{gap:0;}
+  .row{padding:14px 0;border-bottom:1px solid var(--border);border-radius:0 !important;align-items:flex-start;}
+  .row:last-child{border-bottom:none;}
+  .row:hover{background:transparent;border-radius:0 !important;}
+  .row-urgent{border-radius:0 !important;}
+  .done-anim{border-radius:0 !important;}
+
+  /* Checkbox — round like Todoist */
+  .chk{width:40px;min-height:44px;padding-top:2px;}
+  .bx{width:22px;height:22px;border-radius:50% !important;border-width:2px;}
+  .bx.ip{border-radius:50% !important;}
+  .bx.dn{border-radius:50% !important;}
+  .bx-s{width:18px;height:18px;border-radius:50% !important;}
+  .bx-s.ip{border-radius:50% !important;}
+  .bx-s.dn{border-radius:50% !important;}
+
+  /* Card content */
+  .crd{padding:0 4px 0 0;border-radius:0 !important;}
+  .crd-name{font-size:15px;font-weight:400;line-height:1.45;}
+  .crd-top{flex-wrap:wrap;gap:4px;}
+
+  /* Meta below title */
+  .meta{width:100%;order:1;margin-top:4px;font-size:12px;gap:8px;}
+
+  /* Subtasks */
+  .itasks{margin-left:22px;margin-top:6px;}
+  .it{padding:8px 0;font-size:14px;min-height:36px;}
+
+  /* Grip */
   .grip{opacity:1;min-height:48px;width:28px;font-size:18px;touch-action:none;-webkit-touch-callout:none;user-select:none;}
-  .chk{width:36px;min-height:40px;padding-top:10px;}
-  .crd{padding:8px 8px;}
-  .crd-top{flex-wrap:wrap;}
-  .meta{width:100%;order:1;margin-top:4px;}
+
+  /* Icons */
+  .icon-btn{width:36px;height:36px;font-size:15px;}
+
+  /* Hide desktop-only */
   .desktop-only{display:none !important;}
 }
 </style>
