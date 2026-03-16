@@ -1089,6 +1089,27 @@ function mkRow(p){
     );
     panel.append(ft);
     c.append(panel);
+
+    // Mobile: render as bottom sheet overlay instead of inline
+    const isMobile=window.innerWidth<600;
+    if(isMobile){
+      row.append(h("div",{className:"crd"},richTask(p.name,{})));// collapsed placeholder
+      const ov=h("div",{className:"ov"});
+      let ovDown=false;
+      ov.addEventListener("mousedown",e=>{ovDown=(e.target===ov);});
+      ov.addEventListener("mouseup",e=>{if(ovDown&&e.target===ov){s.ed=null;s.noteEdit=false;s._editTask=null;R();}ovDown=false;});
+      ov.addEventListener("touchend",e=>{if(e.target===ov){s.ed=null;s.noteEdit=false;s._editTask=null;R();}});
+      const sheet=h("div",{className:"mod",style:{maxWidth:"100%",maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column"}});
+      sheet.addEventListener("click",e=>e.stopPropagation());
+      // Grab handle
+      sheet.append(h("div",{style:{width:"36px",height:"4px",borderRadius:"2px",background:"var(--border)",margin:"0 auto 12px"}}));
+      c.style.overflow="auto";c.style.flex="1";c.style.paddingBottom="env(safe-area-inset-bottom,16px)";
+      sheet.append(c);
+      ov.append(sheet);
+      requestAnimationFrame(()=>document.getElementById("app").append(ov));
+      return row;
+    }
+
     row.append(c);
     return row;
   }
