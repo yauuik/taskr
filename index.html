@@ -895,7 +895,8 @@ function mkRow(p){
     dateRow.append(calIco);
     dateRow.append(h("span",{style:{fontSize:"13px",color:"var(--sec)",fontWeight:"500"}},"Échéance"));
     const useFP=settings.flatpickr||false;
-    const dateIn=h("input",{type:useFP?"text":"date",value:p.due||"",placeholder:useFP?"Choisir une date…":"",style:{fontSize:"13px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer",marginLeft:"auto",textAlign:"center"}});
+    const today=new Date().toISOString().slice(0,10);
+    const dateIn=h("input",{type:useFP?"text":"date",value:p.due||"",placeholder:useFP?"Choisir une date…":"",min:useFP?undefined:today,style:{fontSize:"13px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer",marginLeft:"auto",textAlign:"center"}});
     dateIn.addEventListener("change",e=>up(p.id,{due:e.target.value||null}));
     dateIn.addEventListener("focus",()=>{dateIn.style.borderColor="var(--accent)";});
     dateIn.addEventListener("blur",()=>{dateIn.style.borderColor="var(--border)";});
@@ -903,6 +904,7 @@ function mkRow(p){
       requestAnimationFrame(()=>{
         flatpickr(dateIn,{
           locale:"fr",dateFormat:"Y-m-d",defaultDate:p.due||null,
+          minDate:today,
           onChange:(sel,dateStr)=>{up(p.id,{due:dateStr||null});},
           onOpen:()=>{dateIn.style.borderColor="var(--accent)";},
           onClose:()=>{dateIn.style.borderColor="var(--border)";}
