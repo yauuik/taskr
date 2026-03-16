@@ -898,7 +898,11 @@ function mkRow(p){
     const useFP=settings.flatpickr||false;
     const today=new Date().toISOString().slice(0,10);
     const dateIn=h("input",{type:useFP?"text":"date",value:p.due||"",placeholder:useFP?"Choisir une date…":"",min:useFP?undefined:today,style:{fontSize:"13px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer",marginLeft:"auto",textAlign:"center"}});
-    dateIn.addEventListener("change",e=>up(p.id,{due:e.target.value||null}));
+    dateIn.addEventListener("change",e=>{
+      const v=e.target.value;
+      if(v&&v<today){e.target.value=p.due||"";return;}
+      up(p.id,{due:v||null});
+    });
     dateIn.addEventListener("focus",()=>{dateIn.style.borderColor="var(--accent)";});
     dateIn.addEventListener("blur",()=>{dateIn.style.borderColor="var(--border)";});
     if(useFP&&typeof flatpickr!=="undefined"){
