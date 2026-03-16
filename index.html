@@ -1186,7 +1186,9 @@ function R(){
   const allIds=new Set(s.p.map(p=>p.id));
   s.sel.forEach(id=>{if(!allIds.has(id))s.sel.delete(id);});
 
+  const lwMap={narrow:"520px",normal:"680px",wide:"900px"};
   const w=h("div",{className:"wrap"});
+  w.style.maxWidth=lwMap[settings.layoutWidth||"normal"];
 
   // Topbar
   const tb=h("div",{className:"topbar"});
@@ -1519,6 +1521,28 @@ function rSett(){
 
   m.append(toggleRow("Flatpickr","Calendrier stylisé au lieu du natif","flatpickr",false,"beta"));
   m.append(toggleRow("Icône mention","Petit icône personne dans les tags","mentionIcon",true));
+
+  // Layout width selector
+  const lwRow=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid var(--border)"}});
+  const lwLeft=h("div",{});
+  lwLeft.append(h("div",{style:{fontSize:"14px",fontWeight:"500",color:"var(--text)"}},"Largeur du contenu"));
+  lwLeft.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}},"Zone principale de la liste"));
+  lwRow.append(lwLeft);
+  const lwOpts=[{key:"narrow",label:"Étroit",w:"520px"},{key:"normal",label:"Normal",w:"680px"},{key:"wide",label:"Large",w:"900px"}];
+  const lwCur=settings.layoutWidth||"normal";
+  const lwBtns=h("div",{style:{display:"flex",gap:"4px"}});
+  lwOpts.forEach(o=>{
+    const active=lwCur===o.key;
+    const b=h("button",{style:{
+      padding:"4px 10px",borderRadius:"6px",fontSize:"11px",fontWeight:"600",cursor:"pointer",border:"1.5px solid "+(active?"var(--accent)":"var(--border)"),
+      background:active?"var(--accent)":"transparent",color:active?"#fff":"var(--sec)",fontFamily:"inherit",transition:"all .15s"
+    }});
+    b.textContent=o.label;
+    b.addEventListener("click",()=>{settings.layoutWidth=o.key;saveSettings(settings);s.sett=true;R();});
+    lwBtns.append(b);
+  });
+  lwRow.append(lwBtns);
+  m.append(lwRow);
 
   // Version
   m.append(h("div",{style:{textAlign:"center",paddingTop:"16px",fontSize:"10px",color:"var(--muted)",fontFamily:"monospace"}},"Task.r v1.3"));
