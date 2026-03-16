@@ -687,7 +687,7 @@ function xcfm(){s.cm=null;s.cf=null;R();}
 
 function onK(e){
   const ii=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName);
-  if(e.key==="Escape"){if(s.cm)xcfm();else if(s.ed){s.ed=null;s.noteEdit=false;}else if(s.exp){s.exp=false;}else if(s.keys){s.keys=false;}else if(s.sett){s.sett=false;}else if(s.sel.size)s.sel.clear();e.preventDefault();R();return;}
+  if(e.key==="Escape"){if(s.cm)xcfm();else if(s._editTask){s._editTask=null;}else if(s.ed){s.ed=null;s.noteEdit=false;s._editTask=null;}else if(s.exp){s.exp=false;}else if(s.keys){s.keys=false;}else if(s.sett){s.sett=false;}else if(s.sel.size)s.sel.clear();e.preventDefault();R();return;}
   if(e.key==="Enter"){if(s.cm){e.preventDefault();s.cf?.();xcfm();return;}if(s.keys){e.preventDefault();s.keys=false;R();return;}if(s.ed&&!ii){e.preventDefault();s.ed=null;R();return;}}
   if(!ii&&!s.ed&&!s.exp&&!s.keys){
     if(e.key==="n"){e.preventDefault();document.querySelector(".quick .ce-field")?.focus();return;}
@@ -848,12 +848,25 @@ function mkRow(p){
         const st=tSt(t);
         const {urgent}=parseTask(t.text);
         const it=h("div",{className:"it"+(urgent?" urgent":"")});
-        const tspan=richTask(t.text,{flex:"1"});
-        if(st==="done")tspan.classList.add("x");
         it.append(
-          h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i);}},bxsTxt(st)),
-          tspan
+          h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i);}},bxsTxt(st))
         );
+        // Editable subtask text
+        if(s._editTask===p.id+"-"+i){
+          const tiWrap=mentionField({
+            value:t.text,
+            style:{fontSize:"13px",background:"transparent",padding:"2px 0",flex:"1"},
+            onInput:v=>{const x=[...ts];x[i]={...x[i],text:capFirst(v)};up(p.id,{tasks:x},true);},
+            onEnter:()=>{s._editTask=null;R();},
+            focusEnd:true
+          });
+          it.append(tiWrap);
+        } else {
+          const tspan=richTask(t.text,{flex:"1",cursor:"text"});
+          if(st==="done")tspan.classList.add("x");
+          tspan.addEventListener("click",e=>{e.stopPropagation();s._editTask=p.id+"-"+i;R();});
+          it.append(tspan);
+        }
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
         it.append(h("button",{className:"rm",style:{fontSize:"12px",padding:"1px 4px"},onClick:e=>{e.stopPropagation();const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});}},"×"));
