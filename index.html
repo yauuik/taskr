@@ -73,6 +73,7 @@ span.flatpickr-weekday{color:var(--sec) !important;font-weight:600 !important;fo
 body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom,0);-webkit-tap-highlight-color:transparent;}
 ::selection{background:var(--accent);color:#fff;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--muted);border-radius:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
 .wrap{max-width:680px;margin:0 auto;padding:24px 20px calc(40px + env(safe-area-inset-bottom,0));padding-left:max(20px,env(safe-area-inset-left,0));padding-right:max(20px,env(safe-area-inset-right,0));}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
@@ -828,6 +829,22 @@ function atk(){if(!s.nk.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up
 function cfm(m,f){s.cm=m;s.cf=f;R();}
 function xcfm(){s.cm=null;s.cf=null;R();}
 
+// ─── Toast Undo ───
+let toastEl=null,toastT=null;
+function toast(msg,undoFn,duration){
+  duration=duration||4000;
+  if(toastEl)toastEl.remove();
+  if(toastT)clearTimeout(toastT);
+  toastEl=h("div",{style:{position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom,0))",left:"50%",transform:"translateX(-50%)",background:"var(--dark)",color:"#fff",padding:"10px 16px",borderRadius:"10px",fontSize:"13px",fontWeight:"500",fontFamily:"inherit",display:"flex",alignItems:"center",gap:"12px",zIndex:"9999",boxShadow:"0 4px 16px rgba(0,0,0,.2)",animation:"toastIn .25s ease"}});
+  toastEl.append(h("span",{},msg));
+  const ub=h("button",{style:{background:"none",border:"none",color:"var(--accent)",fontWeight:"700",fontSize:"13px",cursor:"pointer",fontFamily:"inherit",padding:"0"}});
+  ub.textContent="Annuler";
+  ub.addEventListener("click",()=>{undoFn();clearTimeout(toastT);toastEl.remove();toastEl=null;});
+  toastEl.append(ub);
+  document.body.append(toastEl);
+  toastT=setTimeout(()=>{if(toastEl){toastEl.style.opacity="0";toastEl.style.transition="opacity .3s";setTimeout(()=>{if(toastEl){toastEl.remove();toastEl=null;}},300);}},duration);
+}
+
 function onK(e){
   const ii=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
   if(e.key==="Escape"){if(s.cm)xcfm();else if(s._editTask){s._editTask=null;}else if(s.ed){s.ed=null;s.noteEdit=false;s._editTask=null;}else if(s.exp){s.exp=false;}else if(s.keys){s.keys=false;}else if(s.sett){s.sett=false;}else if(s.sel.size)s.sel.clear();e.preventDefault();R();return;}
@@ -1012,7 +1029,7 @@ function mkRow(p){
         }
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
-        it.append(h("button",{className:"rm",style:{fontSize:"12px",padding:"1px 4px"},onClick:e=>{e.stopPropagation();const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});}},"×"));
+        it.append(h("button",{className:"rm",style:{fontSize:"12px",padding:"1px 4px"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}},"×"));
         itd.append(it);
       });
       c.append(itd);
@@ -1226,7 +1243,7 @@ function mkRow(p){
     // Footer
     const ft=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:"6px",marginTop:"6px"}});
     ft.append(
-      h("button",{className:"btn-t",style:{color:"var(--red)",fontSize:"10px",padding:"2px 6px",minHeight:"auto"},onClick:()=>cfm("Supprimer ce projet ?",()=>{ps(s.p.filter(x=>x.id!==p.id));s.ed=null;})},"Supprimer"),
+      h("button",{className:"btn-t",style:{color:"var(--red)",fontSize:"10px",padding:"2px 6px",minHeight:"auto"},onClick:()=>{const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));s.ed=null;toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}},"Supprimer"),
       h("button",{style:{background:"none",border:"1.5px solid var(--border)",borderRadius:"6px",cursor:"pointer",padding:"4px 12px",fontSize:"11px",fontWeight:"500",color:"var(--sec)",fontFamily:"inherit"},onClick:()=>{s.ed=null;s.noteEdit=false;R();}},"Fermer ✕"),
     );
     panel.append(ft);
@@ -1507,7 +1524,7 @@ function R(){
     const sb2=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px",padding:"8px 14px",background:"#FFF0F2",borderRadius:"8px",fontSize:"12px"}});
     sb2.append(
       h("span",{style:{flex:"1",color:"var(--sec)"}},s.sel.size+" sélect."),
-      h("button",{className:"btn btn-r",style:{fontSize:"11px",padding:"4px 12px"},onClick:()=>cfm("Supprimer "+s.sel.size+" projet(s) ?",()=>{ps(s.p.filter(p=>!s.sel.has(p.id)));s.sel.clear();})},"Supprimer"),
+      h("button",{className:"btn btn-r",style:{fontSize:"11px",padding:"4px 12px"},onClick:()=>{const backup=[...s.p];const n=s.sel.size;ps(s.p.filter(p=>!s.sel.has(p.id)));s.sel.clear();toast(n+" projet(s) supprimé(s)",()=>{ps(backup);});}},"Supprimer"),
       h("button",{className:"btn-t",onClick:()=>{s.sel.clear();R();}},"Annuler")
     );w.append(sb2);
   }
@@ -1541,7 +1558,7 @@ function R(){
           h("span",{style:{flex:"1",fontSize:"13px",color:"var(--muted)",textDecoration:"line-through"}},p.name),
           h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace"}},p.doneAt?shortDt(p.doneAt):""),
           h("button",{className:"btn-t",style:{fontSize:"12px",padding:"4px 8px"},title:"Restaurer",onClick:()=>up(p.id,{hidden:false})},"↩"),
-          h("button",{className:"btn-t",style:{fontSize:"12px",padding:"4px 8px",color:"var(--red)"},title:"Supprimer",onClick:()=>cfm("Supprimer définitivement ?",()=>ps(s.p.filter(x=>x.id!==p.id)))},"🗑")
+          h("button",{className:"btn-t",style:{fontSize:"12px",padding:"4px 8px",color:"var(--red)"},title:"Supprimer",onClick:()=>{const backup=[...s.p];ps(s.p.filter(x=>x.id!==p.id));toast("Supprimé",()=>{ps(backup);});}},"🗑")
         );
         cards.append(row);
       });
