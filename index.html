@@ -227,6 +227,13 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 
   /* Hide desktop-only */
   .desktop-only{display:none !important;}
+
+  /* Hide desktop quick add on mobile */
+  .quick{display:none !important;}
+
+  /* FAB — floating action button */
+  .fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0));right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:28px;font-weight:300;cursor:pointer;box-shadow:0 4px 16px rgba(97,97,255,.35);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;}
+  .fab:active{transform:scale(.92);box-shadow:0 2px 8px rgba(97,97,255,.3);}
 }
 </style>
 </head>
@@ -1415,6 +1422,45 @@ function R(){
     onEnter:qadd
   }));
   w.append(qi);
+
+  // Mobile FAB
+  if(window.innerWidth<600){
+    const fab=h("button",{className:"fab"});
+    fab.textContent="+";
+    fab.addEventListener("click",()=>{
+      const ov=h("div",{className:"ov"});
+      let ovDown=false;
+      ov.addEventListener("mousedown",e=>{ovDown=(e.target===ov);});
+      ov.addEventListener("mouseup",e=>{if(ovDown&&e.target===ov)ov.remove();ovDown=false;});
+      ov.addEventListener("touchend",e=>{if(e.target===ov)ov.remove();});
+      const sheet=h("div",{className:"mod",style:{maxWidth:"100%",padding:"16px 16px calc(16px + env(safe-area-inset-bottom,0))"}});
+      sheet.addEventListener("click",e=>e.stopPropagation());
+      // Grip
+      sheet.append(h("div",{style:{width:"36px",height:"4px",borderRadius:"2px",background:"var(--border)",margin:"0 auto 16px"}}));
+      // Title
+      sheet.append(h("div",{style:{fontSize:"15px",fontWeight:"600",color:"var(--text)",marginBottom:"12px"}},"Nouvelle tâche"));
+      // Input
+      const addWrap=mentionField({
+        value:"",
+        placeholder:"Nom de la tâche…",
+        style:{fontSize:"16px",padding:"12px",border:"1.5px solid var(--border)",borderRadius:"8px",background:"var(--card)",width:"100%"},
+        onInput:v=>{s.an=v;},
+        onEnter:()=>{
+          if(s.an.trim()){qadd();ov.remove();}
+        },
+        focusEnd:true
+      });
+      sheet.append(addWrap);
+      ov.append(sheet);
+      document.getElementById("app").append(ov);
+      // Auto-focus after render
+      requestAnimationFrame(()=>{
+        const inp=sheet.querySelector("input");
+        if(inp)inp.focus();
+      });
+    });
+    document.getElementById("app").append(fab);
+  }
 
   // Selection bar
   if(s.sel.size){
