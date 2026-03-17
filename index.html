@@ -979,7 +979,7 @@ function mkRow(p){
 
   // ═══ EXPANDED STATE ═══
   if(isOpen){
-    const c=h("div",{className:"crd crd-open",style:{background:"var(--card)"}});
+    const c=h("div",{className:"crd crd-open",style:{background:"transparent",borderLeft:"3px solid var(--accent)",paddingLeft:"12px"}});
     c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
     // Same top row as collapsed — name is editable input with @mention
