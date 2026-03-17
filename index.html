@@ -850,7 +850,7 @@ function toast(msg,undoFn,duration){
 
 function onK(e){
   const ii=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)||document.activeElement?.isContentEditable;
-  if(e.key==="Escape"){if(s.cm)xcfm();else if(s._editTask){s._editTask=null;}else if(s.ed){s.ed=null;s.noteEdit=false;s._editTask=null;}else if(s.exp){s.exp=false;}else if(s.keys){s.keys=false;}else if(s.sett){s.sett=false;}else if(s.sel.size)s.sel.clear();e.preventDefault();R();return;}
+  if(e.key==="Escape"){if(s.cm)xcfm();else if(s._editTask){s._editTask=null;}else if(s.qed){s.qed=null;}else if(s.ed){s.ed=null;s.noteEdit=false;s._editTask=null;}else if(s.exp){s.exp=false;}else if(s.keys){s.keys=false;}else if(s.sett){s.sett=false;}else if(s.sel.size)s.sel.clear();e.preventDefault();R();return;}
   if(e.key==="Enter"){if(s.cm){e.preventDefault();s.cf?.();xcfm();return;}if(s.keys){e.preventDefault();s.keys=false;R();return;}if(s.ed&&!ii){e.preventDefault();s.ed=null;R();return;}}
   if(!ii&&!s.ed&&!s.exp&&!s.keys){
     if(e.key==="n"){e.preventDefault();document.querySelector(".quick .ce-field")?.focus();return;}
@@ -1305,15 +1305,32 @@ function mkRow(p){
 
   // ═══ COLLAPSED STATE ═══
   const c=h("div",{className:"crd"});
-  if(!isTodo)c.addEventListener("click",()=>{s.ed=p.id;s.nk="";s.noteEdit=false;R();});
   c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
   const {urgent:projUrgent}=parseTask(p.name);
   if(!isDone&&(projUrgent||isUrgent(p)))row.classList.add("row-urgent");
   const top=h("div",{className:"crd-top"});
-  const nameEl=richTask(p.name,{});
-  nameEl.className="crd-name"+(isDone?" x":"");
-  top.append(nameEl);
+
+  // Quick inline edit: just the name becomes an input
+  if(s.qed===p.id){
+    const nameWrap=mentionField({
+      value:p.name,
+      style:{fontSize:"15px",fontWeight:"500",background:"transparent",padding:"0"},
+      onInput:v=>up(p.id,{name:capFirst(v)},true),
+      onEnter:()=>{s.qed=null;R();},
+      focusEnd:true
+    });
+    top.append(nameWrap);
+  } else {
+    const nameEl=richTask(p.name,{});
+    nameEl.className="crd-name"+(isDone?" x":"");
+    nameEl.addEventListener("click",e=>{
+      e.stopPropagation();
+      if(isDone)return;
+      s.qed=p.id;R();
+    });
+    top.append(nameEl);
+  }
   const meta=h("div",{className:"meta"});
   if(ts.length){
     const pg=h("div",{className:"prog"});
@@ -1332,6 +1349,12 @@ function mkRow(p){
   if(isDone&&p.doneAt)meta.append(h("span",{style:{color:"var(--green)",fontSize:"10px",fontFamily:"monospace"}},"✓ "+shortDt(p.doneAt)));
   const db=dateBadge(p.due);
   if(db&&!isDone)meta.append(db);
+  // Expand arrow for full edit
+  if(!isDone){
+    const expArrow=h("span",{className:"rm",style:{fontSize:"14px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",marginLeft:"2px",flexShrink:"0"},onClick:e=>{e.stopPropagation();s.ed=p.id;s.nk="";s.noteEdit=false;s.qed=null;R();}});
+    expArrow.textContent="▸";
+    meta.append(expArrow);
+  }
   top.append(meta);c.append(top);
 
   if(ts.length){
@@ -1584,20 +1607,19 @@ function R(){
 
   // Click outside expanded card → close
   if(s._outsideH){document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;}
-  if(s.ed&&!s.cm){
+  if((s.ed||s.qed)&&!s.cm){
+    const editId=s.ed||s.qed;
     s._outsideH=e=>{
-      if(!s.ed||s.cm)return;
-      // Ignore clicks on flatpickr calendar
+      if((!s.ed&&!s.qed)||s.cm)return;
       if(e.target.closest&&e.target.closest(".flatpickr-calendar"))return;
-      // Check if click is inside the expanded row
       let el=e.target;
       while(el){
-        if(el.getAttribute&&el.getAttribute("data-id")===s.ed)return;
+        if(el.getAttribute&&el.getAttribute("data-id")===editId)return;
         if(el.className&&typeof el.className==="string"&&(el.className.includes("cfm")||el.className.includes("ov")))return;
         el=el.parentElement;
       }
       document.removeEventListener("mousedown",s._outsideH,true);s._outsideH=null;
-      s.ed=null;s.noteEdit=false;R();
+      s.ed=null;s.qed=null;s.noteEdit=false;R();
     };
     setTimeout(()=>document.addEventListener("mousedown",s._outsideH,true),50);
   }
