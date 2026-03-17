@@ -1032,7 +1032,7 @@ function mkRow(p){
         }
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
-        it.append(h("button",{className:"rm",style:{fontSize:"14px",padding:"4px 6px",flexShrink:"0"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}},"×"));
+        it.append(h("button",{className:"rm",style:{fontSize:"16px",padding:"4px 8px",flexShrink:"0"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}},"×"));
         itd.append(it);
       });
       c.append(itd);
@@ -1353,7 +1353,9 @@ function mkRow(p){
     const hBtn=h("span",{style:{fontSize:"14px",color:"var(--muted)",cursor:"pointer",padding:"8px",lineHeight:"1",flexShrink:"0",alignSelf:"center"},onClick:e=>{e.stopPropagation();up(p.id,{hidden:true});}},"×");
     row.append(c,hBtn);
   } else {
-    row.append(c);
+    const delBtn=h("button",{className:"rm",style:{fontSize:"16px",padding:"4px 8px",flexShrink:"0",alignSelf:"center"},onClick:e=>{e.stopPropagation();const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}});
+    delBtn.textContent="×";
+    row.append(c,delBtn);
   }
   return row;
 }
