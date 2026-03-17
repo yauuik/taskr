@@ -642,7 +642,7 @@ function save(){
   s.sy="saving";
   if(svT)clearTimeout(svT);
   svT=setTimeout(async()=>{
-    try{await sb(s.p);s.sy="synced";slog("☁","Sauvegardé ("+s.p.length+" projets)");}
+    try{await sb(s.p);s.sy="synced";slog("☁","Sauvegardé ("+s.p.length+" projets)");notifyTabs();}
     catch{s.sy="error";slog("✕","Erreur sauvegarde");}
     // Only re-render sync indicator, not the whole UI if editing
     if(!s.ed){qR();}
@@ -658,6 +658,45 @@ function save(){
 let rAF=null;
 function qR(){if(!rAF)rAF=requestAnimationFrame(()=>{rAF=null;R();});}
 
+// ─── Cross-device & cross-tab sync ───
+const bc=typeof BroadcastChannel!=="undefined"?new BroadcastChannel("taskr-sync"):null;
+
+// Notify other tabs after save
+function notifyTabs(){if(bc)bc.postMessage("updated");}
+
+// Listen for other tab updates (instant, same device)
+if(bc)bc.onmessage=()=>{
+  const local=lsLoad();
+  if(local&&JSON.stringify(local)!==JSON.stringify(s.p)){
+    s.p=local;slog("↔","Sync onglet");if(!s.ed)qR();
+  }
+};
+
+// Polling — check jsonbin every 20s (skip if editing or just saved)
+let lastPoll=0;
+setInterval(async()=>{
+  if(s.ed||s.sy==="saving")return;
+  try{
+    const remote=await lb();
+    if(JSON.stringify(remote)!==JSON.stringify(s.p)){
+      s.p=remote;lsSave();slog("↓","Sync cloud");qR();
+    }
+  }catch{}
+  lastPoll=Date.now();
+},20000);
+
+// Visibility — sync immediately when tab becomes visible
+document.addEventListener("visibilitychange",async()=>{
+  if(document.hidden||s.ed)return;
+  if(Date.now()-lastPoll<5000)return;// skip if just polled
+  try{
+    const remote=await lb();
+    if(JSON.stringify(remote)!==JSON.stringify(s.p)){
+      s.p=remote;lsSave();slog("↓","Sync retour");qR();
+    }
+  }catch{}
+  lastPoll=Date.now();
+});
 // ps: replace all projects + save + render
 function ps(p){s.p=p;slog("↑","Sauvegarde…");save();qR();}
 
