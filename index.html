@@ -835,14 +835,17 @@ function toast(msg,undoFn,duration){
   duration=duration||4000;
   if(toastEl)toastEl.remove();
   if(toastT)clearTimeout(toastT);
-  toastEl=h("div",{style:{position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom,0))",left:"50%",transform:"translateX(-50%)",background:"var(--dark)",color:"#fff",padding:"10px 16px",borderRadius:"10px",fontSize:"13px",fontWeight:"500",fontFamily:"inherit",display:"flex",alignItems:"center",gap:"12px",zIndex:"9999",boxShadow:"0 4px 16px rgba(0,0,0,.2)",animation:"toastIn .25s ease"}});
+  toastEl=document.createElement("div");
+  toastEl.id="taskr-toast";
+  toastEl.style.cssText="position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%);background:#181B34;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:14px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);animation:toastIn .25s ease;";
   toastEl.append(h("span",{},msg));
-  const ub=h("button",{style:{background:"none",border:"none",color:"var(--accent)",fontWeight:"700",fontSize:"13px",cursor:"pointer",fontFamily:"inherit",padding:"0"}});
+  const ub=document.createElement("button");
+  ub.style.cssText="background:none;border:none;color:#6161FF;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;padding:0;";
   ub.textContent="Annuler";
   ub.addEventListener("click",()=>{undoFn();clearTimeout(toastT);toastEl.remove();toastEl=null;});
   toastEl.append(ub);
   document.body.append(toastEl);
-  toastT=setTimeout(()=>{if(toastEl){toastEl.style.opacity="0";toastEl.style.transition="opacity .3s";setTimeout(()=>{if(toastEl){toastEl.remove();toastEl=null;}},300);}},duration);
+  toastT=setTimeout(()=>{const el=document.getElementById("taskr-toast");if(el){el.style.opacity="0";el.style.transition="opacity .3s";setTimeout(()=>{if(el.parentNode)el.remove();toastEl=null;},300);}},duration);
 }
 
 function onK(e){
