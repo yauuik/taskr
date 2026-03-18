@@ -748,7 +748,7 @@ const UNDO_MS=2000;
 const lastTogP={};
 const lastTogT={};
 
-function togP(id){
+function togP(id,reverse){
   const p=s.p.find(x=>x.id===id);if(!p)return;
   const now=Date.now();
   // Quick re-click → undo
@@ -760,7 +760,7 @@ function togP(id){
     delete lastTogP[id];
     up(id,patch);return;
   }
-  const next=NEXT[p.status]||"To Do";
+  const next=reverse?(PREV[p.status]||"Done"):(NEXT[p.status]||"To Do");
   lastTogP[id]={t:now,st:p.status};
   setTimeout(()=>{if(lastTogP[id]&&(Date.now()-lastTogP[id].t)>=UNDO_MS)delete lastTogP[id];},UNDO_MS+50);
   const patch={status:next};
@@ -782,7 +782,7 @@ function togP(id){
   } else up(id,patch);
 }
 
-function togT(pid,i){
+function togT(pid,i,reverse){
   const p=s.p.find(x=>x.id===pid);if(!p)return;
   const t=(p.tasks||[])[i];if(!t)return;
   const now=Date.now();
@@ -800,7 +800,7 @@ function togT(pid,i){
   lastTogT[tk]={t:now,st:tSt(t)};
   setTimeout(()=>{if(lastTogT[tk]&&(Date.now()-lastTogT[tk].t)>=UNDO_MS)delete lastTogT[tk];},UNDO_MS+50);
   const ts=[...(p.tasks||[])];
-  const nst=TNEXT[tSt(t)]||"todo";
+  const nst=reverse?(TPREV[tSt(t)]||"done"):(TNEXT[tSt(t)]||"todo");
   const nt={...t,st:nst};
   if(nst==="done") nt.doneAt=td();
   else delete nt.doneAt;
@@ -987,7 +987,7 @@ function mkRow(p){
   }
 
   // Checkbox
-  row.append(h("div",{className:"chk",onClick:e=>{e.stopPropagation();togP(p.id);}},
+  row.append(h("div",{className:"chk",onClick:e=>{e.stopPropagation();togP(p.id,e.altKey);}},
     h("div",{className:bxCls(pSt)},bxTxt(pSt))));
 
   // ═══ EXPANDED STATE ═══
@@ -1025,7 +1025,7 @@ function mkRow(p){
         const {urgent}=parseTask(t.text);
         const it=h("div",{className:"it"+(urgent?" urgent":"")});
         it.append(
-          h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i);}},bxsTxt(st))
+          h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i,e.altKey);}},bxsTxt(st))
         );
         // Editable subtask text
         if(s._editTask===p.id+"-"+i){
@@ -1372,7 +1372,7 @@ function mkRow(p){
       const tspan2=richTask(t.text,{flex:"1"});
       if(st==="done")tspan2.classList.add("x");
       it.append(
-        h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i);}},bxsTxt(st)),
+        h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i,e.altKey);}},bxsTxt(st)),
         tspan2
       );
       if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
