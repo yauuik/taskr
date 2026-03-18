@@ -1505,15 +1505,35 @@ function R(){
   acts.append(syncWrap);
   tb.append(acts);w.append(tb);
 
-  // Quick input
-  const qi=h("div",{className:"quick"});
-  qi.append(mentionField({
+  // Quick input — Todoist style
+  const qi=h("div",{className:"quick",style:{padding:"0",overflow:"hidden"}});
+  // Input area
+  const qiInput=h("div",{style:{padding:"12px 16px"}});
+  qiInput.append(mentionField({
     value:s.an,
-    placeholder:"Ajouter une tâche…",
-    style:{fontSize:"15px"},
+    placeholder:"Nom de la tâche…",
+    style:{fontSize:"14px",fontWeight:"500"},
     onInput:v=>{s.an=v;},
     onEnter:qadd
   }));
+  qiInput.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"4px",cursor:"text"}},"Description"));
+  qi.append(qiInput);
+  // Action chips
+  const qiChips=h("div",{style:{display:"flex",gap:"6px",padding:"0 16px 10px",flexWrap:"wrap"}});
+  const chip=(icon,label)=>{
+    const c=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"4px",padding:"4px 10px",borderRadius:"6px",border:"1px solid var(--border)",fontSize:"11px",color:"var(--sec)",cursor:"pointer",background:"transparent",fontFamily:"inherit"}});
+    c.textContent=icon+" "+label;
+    return c;
+  };
+  qiChips.append(chip("📅","Date"),chip("🏷","Tag"),chip("⚑","Priorité"));
+  qi.append(qiChips);
+  // Footer with buttons
+  const qiFoot=h("div",{style:{display:"flex",justifyContent:"flex-end",gap:"8px",padding:"8px 16px",borderTop:"1px solid var(--border)"}});
+  qiFoot.append(
+    h("button",{style:{padding:"6px 14px",borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";R();}},"Annuler"),
+    h("button",{style:{padding:"6px 14px",borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim())qadd();}},"Ajouter une tâche")
+  );
+  qi.append(qiFoot);
   w.append(qi);
 
   // Mobile FAB
