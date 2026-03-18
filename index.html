@@ -1505,35 +1505,40 @@ function R(){
   acts.append(syncWrap);
   tb.append(acts);w.append(tb);
 
-  // Quick input — Todoist style
-  const qi=h("div",{className:"quick",style:{padding:"0",overflow:"hidden"}});
-  // Input area
-  const qiInput=h("div",{style:{padding:"12px 16px"}});
-  qiInput.append(mentionField({
-    value:s.an,
-    placeholder:"Nom de la tâche…",
-    style:{fontSize:"14px",fontWeight:"500"},
-    onInput:v=>{s.an=v;},
-    onEnter:qadd
-  }));
-  qiInput.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"4px",cursor:"text"}},"Description"));
-  qi.append(qiInput);
-  // Action chips
-  const qiChips=h("div",{style:{display:"flex",gap:"6px",padding:"0 16px 10px",flexWrap:"wrap"}});
-  const chip=(icon,label)=>{
-    const c=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"4px",padding:"4px 10px",borderRadius:"6px",border:"1px solid var(--border)",fontSize:"11px",color:"var(--sec)",cursor:"pointer",background:"transparent",fontFamily:"inherit"}});
-    c.textContent=icon+" "+label;
-    return c;
-  };
-  qiChips.append(chip("📅","Date"),chip("🏷","Tag"),chip("⚑","Priorité"));
-  qi.append(qiChips);
-  // Footer with buttons
-  const qiFoot=h("div",{style:{display:"flex",justifyContent:"flex-end",gap:"8px",padding:"8px 16px",borderTop:"1px solid var(--border)"}});
-  qiFoot.append(
-    h("button",{style:{padding:"6px 14px",borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";R();}},"Annuler"),
-    h("button",{style:{padding:"6px 14px",borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim())qadd();}},"Ajouter une tâche")
-  );
-  qi.append(qiFoot);
+  // Quick input — Todoist style, collapsed by default
+  const qi=h("div",{className:"quick",style:{padding:"0",overflow:"hidden",cursor:s._qiOpen?"default":"text"}});
+  if(!s._qiOpen){
+    // Collapsed state
+    const qiCollapsed=h("div",{style:{padding:"12px 16px",color:"var(--muted)",fontSize:"14px"}});
+    qiCollapsed.textContent="+ Ajouter une tâche…";
+    qiCollapsed.addEventListener("click",()=>{s._qiOpen=true;R();});
+    qi.append(qiCollapsed);
+  } else {
+    // Expanded state
+    const qiInput=h("div",{style:{padding:"12px 16px 8px"}});
+    qiInput.append(mentionField({
+      value:s.an,
+      placeholder:"Nom de la tâche…",
+      style:{fontSize:"14px",fontWeight:"500"},
+      onInput:v=>{s.an=v;},
+      onEnter:()=>{if(s.an.trim()){qadd();s._qiOpen=false;}},
+      focusEnd:true
+    }));
+    qi.append(qiInput);
+    // Date chip
+    const qiChips=h("div",{style:{display:"flex",gap:"6px",padding:"0 16px 10px"}});
+    const dateChip=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"4px",padding:"4px 10px",borderRadius:"6px",border:"1px solid var(--border)",fontSize:"11px",color:"var(--sec)",cursor:"pointer",background:"transparent",fontFamily:"inherit"}});
+    dateChip.textContent="📅 Date";
+    qiChips.append(dateChip);
+    qi.append(qiChips);
+    // Footer
+    const qiFoot=h("div",{style:{display:"flex",justifyContent:"flex-end",gap:"8px",padding:"8px 16px",borderTop:"1px solid var(--border)"}});
+    qiFoot.append(
+      h("button",{style:{padding:"6px 14px",borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:"12px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";s._qiOpen=false;R();}},"Annuler"),
+      h("button",{style:{padding:"6px 14px",borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:"12px",fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim()){qadd();s._qiOpen=false;}}},"Ajouter")
+    );
+    qi.append(qiFoot);
+  }
   w.append(qi);
 
   // Mobile FAB
