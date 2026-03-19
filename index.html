@@ -1954,17 +1954,48 @@ function rCalc(){
 
   // Result display
   const resultTime=h("div",{style:{fontSize:"36px",fontWeight:"700",color:"var(--accent)",fontFamily:"monospace",letterSpacing:".02em"}},calcEnd(arrival,pause));
+  const resultSub=h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"4px"}},"Journée de 7h10");
   const result=h("div",{style:{textAlign:"center",padding:"20px 0",background:"var(--hover)",borderRadius:"10px",marginBottom:"16px"}});
   result.append(
     h("div",{style:{fontSize:"11px",color:"var(--sec)",fontWeight:"600",textTransform:"uppercase",letterSpacing:".04em",marginBottom:"6px"}},"Heure de sortie"),
     resultTime,
-    h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"4px"}},"Journée de 7h10")
+    resultSub
   );
   m.append(result);
 
+  let departure=settings._calcDep||"";
+
+  function calcOvertime(){
+    if(!departure)return null;
+    const [ah,am]=arrival.split(":").map(Number);
+    const [dh,dm]=departure.split(":").map(Number);
+    if(isNaN(ah)||isNaN(am)||isNaN(dh)||isNaN(dm))return null;
+    const worked=(dh*60+dm)-(ah*60+am)-pause;
+    const diff=worked-WORK;
+    const sign=diff>=0?"+":"−";
+    const abs=Math.abs(diff);
+    return{diff,label:sign+Math.floor(abs/60)+"h"+String(abs%60).padStart(2,"0")};
+  }
+
   function updateResult(){
     resultTime.textContent=calcEnd(arrival,pause);
-    settings._calcArr=arrival;settings._calcPause=pause;saveSettings(settings);
+    settings._calcArr=arrival;settings._calcPause=pause;settings._calcDep=departure;saveSettings(settings);
+    // Overtime
+    const ot=calcOvertime();
+    if(ot){
+      const color=ot.diff>=0?"var(--green)":"var(--red)";
+      resultSub.innerHTML="";
+      resultSub.style.marginTop="8px";
+      resultSub.append(
+        h("span",{style:{fontSize:"14px",fontWeight:"700",color,fontFamily:"monospace"}},ot.label),
+        h("span",{style:{fontSize:"11px",color:"var(--muted)",marginLeft:"6px"}},"vs 7h10")
+      );
+    } else {
+      resultSub.textContent="Journée de 7h10";
+      resultSub.style.marginTop="4px";
+    }
+    // Update departure input border
+    if(depIn)depIn.style.color=departure?"var(--text)":"var(--muted)";
     // Update quick buttons active state
     qp.querySelectorAll("button").forEach(b=>{
       const min=parseInt(b.textContent);
@@ -2007,6 +2038,27 @@ function rCalc(){
     qp.append(b);
   });
   m.append(qp);
+
+  // Departure field (optional)
+  const depRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid var(--border)"}});
+  depRow.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Départ réel"));
+  const depWrap=h("div",{style:{display:"flex",alignItems:"center",gap:"6px"}});
+  const depIn=h("input",{type:"time",value:departure,style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:departure?"var(--text)":"var(--muted)",background:"var(--card)",outline:"none",textAlign:"center",width:"100px"}});
+  depIn.addEventListener("input",e=>{departure=e.target.value||"";updateResult();});
+  depIn.addEventListener("focus",()=>{depIn.style.borderColor="var(--accent)";});
+  depIn.addEventListener("blur",()=>{depIn.style.borderColor="var(--border)";});
+  depWrap.append(depIn);
+  if(departure){
+    const clearBtn=h("button",{style:{background:"none",border:"none",fontSize:"14px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",lineHeight:"1"}});
+    clearBtn.textContent="×";
+    clearBtn.addEventListener("click",()=>{departure="";depIn.value="";updateResult();});
+    depWrap.append(clearBtn);
+  }
+  depRow.append(depWrap);
+  m.append(depRow);
+
+  // Initial update
+  updateResult();
 
   ov.append(m);document.getElementById("app").append(ov);
 }
