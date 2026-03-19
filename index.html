@@ -2009,14 +2009,24 @@ function rCalc(){
   // Auto-formatting time input: 0910 → 09:10
   function timeInput(value,onChange){
     const input=h("input",{type:"text",value,placeholder:"--:--",maxLength:"5",inputMode:"numeric",style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"80px"}});
-    input.addEventListener("input",()=>{
-      let v=input.value.replace(/[^0-9]/g,"");
-      if(v.length>4)v=v.slice(0,4);
-      if(v.length>=3){
-        v=v.slice(0,2)+":"+v.slice(2);
+    input.addEventListener("keydown",e=>{
+      // Allow: backspace, delete, tab, escape, arrows
+      if(["Backspace","Delete","Tab","Escape","ArrowLeft","ArrowRight"].includes(e.key))return;
+      // Block non-numeric
+      if(!/^[0-9]$/.test(e.key)){e.preventDefault();return;}
+      // If all selected, clear first
+      if(input.selectionStart===0&&input.selectionEnd===input.value.length){
+        input.value="";
       }
-      input.value=v;
-      if(v.length===5)onChange(v);
+      // Get raw digits + new one
+      const raw=(input.value.replace(/[^0-9]/g,"")+e.key).slice(0,4);
+      e.preventDefault();
+      if(raw.length>=3){
+        input.value=raw.slice(0,2)+":"+raw.slice(2);
+      } else {
+        input.value=raw;
+      }
+      if(input.value.length===5)onChange(input.value);
     });
     input.addEventListener("focus",()=>{input.style.borderColor="var(--accent)";input.select();});
     input.addEventListener("blur",()=>{input.style.borderColor="var(--border)";if(input.value.length===5)onChange(input.value);});
