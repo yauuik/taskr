@@ -2006,13 +2006,27 @@ function rCalc(){
     });
   }
 
+  // Auto-formatting time input: 0910 → 09:10
+  function timeInput(value,onChange){
+    const input=h("input",{type:"text",value,placeholder:"--:--",maxLength:"5",inputMode:"numeric",style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"80px"}});
+    input.addEventListener("input",()=>{
+      let v=input.value.replace(/[^0-9]/g,"");
+      if(v.length>4)v=v.slice(0,4);
+      if(v.length>=3){
+        v=v.slice(0,2)+":"+v.slice(2);
+      }
+      input.value=v;
+      if(v.length===5)onChange(v);
+    });
+    input.addEventListener("focus",()=>{input.style.borderColor="var(--accent)";input.select();});
+    input.addEventListener("blur",()=>{input.style.borderColor="var(--border)";if(input.value.length===5)onChange(input.value);});
+    return input;
+  }
+
   // Arrival input
   const arrRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid var(--border)"}});
   arrRow.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Arrivée"));
-  const arrIn=h("input",{type:"time",value:arrival,style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"100px"}});
-  arrIn.addEventListener("input",e=>{arrival=e.target.value;updateResult();});
-  arrIn.addEventListener("focus",()=>{arrIn.style.borderColor="var(--accent)";});
-  arrIn.addEventListener("blur",()=>{arrIn.style.borderColor="var(--border)";});
+  const arrIn=timeInput(arrival,v=>{arrival=v;updateResult();});
   arrRow.append(arrIn);
   m.append(arrRow);
 
@@ -2043,10 +2057,7 @@ function rCalc(){
   const depRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid var(--border)"}});
   depRow.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Départ réel"));
   const depWrap=h("div",{style:{display:"flex",alignItems:"center",gap:"6px"}});
-  const depIn=h("input",{type:"time",value:departure,style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:departure?"var(--text)":"var(--muted)",background:"var(--card)",outline:"none",textAlign:"center",width:"100px"}});
-  depIn.addEventListener("input",e=>{departure=e.target.value||"";updateResult();});
-  depIn.addEventListener("focus",()=>{depIn.style.borderColor="var(--accent)";});
-  depIn.addEventListener("blur",()=>{depIn.style.borderColor="var(--border)";});
+  const depIn=timeInput(departure,v=>{departure=v;updateResult();});
   depWrap.append(depIn);
   if(departure){
     const clearBtn=h("button",{style:{background:"none",border:"none",fontSize:"14px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",lineHeight:"1"}});
