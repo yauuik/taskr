@@ -1539,8 +1539,19 @@ function R(){
     let searchT=null;
     sIn.addEventListener("input",e=>{
       s.sq=e.target.value;
+      // Live filter without full re-render (no keyboard flash)
       if(searchT)clearTimeout(searchT);
-      searchT=setTimeout(()=>{s._searchFocus=true;R();},250);
+      // Immediate DOM filter
+      document.querySelectorAll("[data-id]").forEach(row=>{
+        const id=row.getAttribute("data-id");
+        const p=s.p.find(x=>x.id===id);
+        if(p)row.style.display=matchSearch(p)?"":"none";
+      });
+      // Update count
+      const cnt=sb2.querySelector("[data-search-count]");
+      if(cnt){const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;cnt.textContent=total+" résultat"+(total!==1?"s":"");}
+      // Delayed full re-render for section counts
+      searchT=setTimeout(()=>{s._searchFocus=true;R();},800);
     });
     sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s.search=false;s.sq="";R();}});
     sb2.append(sIn);
@@ -1556,7 +1567,9 @@ function R(){
     // Result count
     if(s.sq){
       const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;
-      sb2.append(h("span",{style:{fontSize:"11px",color:"var(--muted)",whiteSpace:"nowrap"}},total+" résultat"+(total!==1?"s":"")));
+      const countSpan=h("span",{style:{fontSize:"11px",color:"var(--muted)",whiteSpace:"nowrap"}},total+" résultat"+(total!==1?"s":""));
+      countSpan.setAttribute("data-search-count","1");
+      sb2.append(countSpan);
     }
     const cls=h("button",{style:{background:"none",border:"none",fontSize:"11px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",fontFamily:"inherit"}});
     cls.textContent="Fermer";
