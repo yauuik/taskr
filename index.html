@@ -1952,42 +1952,45 @@ function rCalc(){
     return String(eh).padStart(2,"0")+":"+String(em).padStart(2,"0");
   }
 
-  const endTime=calcEnd(arrival,pause);
-
   // Result display
+  const resultTime=h("div",{style:{fontSize:"36px",fontWeight:"700",color:"var(--accent)",fontFamily:"monospace",letterSpacing:".02em"}},calcEnd(arrival,pause));
   const result=h("div",{style:{textAlign:"center",padding:"20px 0",background:"var(--hover)",borderRadius:"10px",marginBottom:"16px"}});
   result.append(
     h("div",{style:{fontSize:"11px",color:"var(--sec)",fontWeight:"600",textTransform:"uppercase",letterSpacing:".04em",marginBottom:"6px"}},"Heure de sortie"),
-    h("div",{style:{fontSize:"36px",fontWeight:"700",color:"var(--accent)",fontFamily:"monospace",letterSpacing:".02em"}},endTime),
+    resultTime,
     h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"4px"}},"Journée de 7h10")
   );
   m.append(result);
 
-  // Arrival input
-  function fieldRow(label,type,value,onChange){
-    const row=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid var(--border)"}});
-    row.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},label));
-    const input=h("input",{type,value,style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:type==="time"?"100px":"70px"}});
-    input.addEventListener("change",e=>onChange(e.target.value));
-    input.addEventListener("focus",()=>{input.style.borderColor="var(--accent)";});
-    input.addEventListener("blur",()=>{input.style.borderColor="var(--border)";});
-    row.append(input);
-    return row;
+  function updateResult(){
+    resultTime.textContent=calcEnd(arrival,pause);
+    settings._calcArr=arrival;settings._calcPause=pause;saveSettings(settings);
+    // Update quick buttons active state
+    qp.querySelectorAll("button").forEach(b=>{
+      const min=parseInt(b.textContent);
+      const active=min===pause;
+      b.style.borderColor=active?"var(--accent)":"var(--border)";
+      b.style.background=active?"var(--accent)":"transparent";
+      b.style.color=active?"#fff":"var(--sec)";
+    });
   }
 
-  m.append(fieldRow("Arrivée","time",arrival,v=>{
-    arrival=v;settings._calcArr=v;saveSettings(settings);s.calc=true;R();
-  }));
+  // Arrival input
+  const arrRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid var(--border)"}});
+  arrRow.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Arrivée"));
+  const arrIn=h("input",{type:"time",value:arrival,style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"100px"}});
+  arrIn.addEventListener("input",e=>{arrival=e.target.value;updateResult();});
+  arrIn.addEventListener("focus",()=>{arrIn.style.borderColor="var(--accent)";});
+  arrIn.addEventListener("blur",()=>{arrIn.style.borderColor="var(--border)";});
+  arrRow.append(arrIn);
+  m.append(arrRow);
 
   // Pause input (minutes)
   const pauseRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid var(--border)"}});
   pauseRow.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Pause midi"));
   const pauseWrap=h("div",{style:{display:"flex",alignItems:"center",gap:"6px"}});
   const pauseIn=h("input",{type:"number",value:pause,min:"0",max:"120",step:"5",style:{fontSize:"14px",padding:"6px 8px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"60px"}});
-  pauseIn.addEventListener("change",e=>{
-    pause=parseInt(e.target.value)||30;
-    settings._calcPause=pause;saveSettings(settings);s.calc=true;R();
-  });
+  pauseIn.addEventListener("input",e=>{pause=parseInt(e.target.value)||0;updateResult();});
   pauseIn.addEventListener("focus",()=>{pauseIn.style.borderColor="var(--accent)";});
   pauseIn.addEventListener("blur",()=>{pauseIn.style.borderColor="var(--border)";});
   pauseWrap.append(pauseIn,h("span",{style:{fontSize:"11px",color:"var(--muted)"}},"min"));
@@ -2000,7 +2003,7 @@ function rCalc(){
     const active=pause===min;
     const b=h("button",{style:{padding:"4px 12px",borderRadius:"6px",fontSize:"11px",fontWeight:"600",cursor:"pointer",border:"1.5px solid "+(active?"var(--accent)":"var(--border)"),background:active?"var(--accent)":"transparent",color:active?"#fff":"var(--sec)",fontFamily:"inherit",transition:"all .15s"}});
     b.textContent=min+"'";
-    b.addEventListener("click",()=>{settings._calcPause=min;saveSettings(settings);s.calc=true;R();});
+    b.addEventListener("click",()=>{pause=min;pauseIn.value=min;updateResult();});
     qp.append(b);
   });
   m.append(qp);
