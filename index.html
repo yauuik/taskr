@@ -2009,18 +2009,20 @@ function rCalc(){
   // Auto-formatting time input: 0910 → 09:10
   function timeInput(value,onChange){
     const input=h("input",{type:"text",value,placeholder:"--:--",inputMode:"numeric",style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"80px"}});
-    let wasSelected=false;
-    input.addEventListener("focus",()=>{input.style.borderColor="var(--accent)";input.select();wasSelected=true;});
-    input.addEventListener("blur",()=>{input.style.borderColor="var(--border)";wasSelected=false;if(input.value.length===5)onChange(input.value);});
+    input.addEventListener("focus",()=>{input.style.borderColor="var(--accent)";input.select();});
+    input.addEventListener("blur",()=>{input.style.borderColor="var(--border)";if(input.value.length===5)onChange(input.value);});
     input.addEventListener("input",()=>{
-      // If user started typing over a selection, digits only
-      let raw=input.value.replace(/[^0-9]/g,"").slice(0,4);
+      const pos=input.selectionStart;
+      const raw=input.value.replace(/[^0-9]/g,"").slice(0,4);
       let formatted=raw;
       if(raw.length>=3)formatted=raw.slice(0,2)+":"+raw.slice(2);
       if(input.value!==formatted){
         input.value=formatted;
+        // Adjust cursor: if we just inserted the ":", move cursor forward
+        const newPos=pos+(formatted.length>raw.length&&pos>=2?1:0);
+        input.setSelectionRange(newPos,newPos);
       }
-      if(formatted.length===5){onChange(formatted);wasSelected=false;}
+      if(formatted.length===5)onChange(formatted);
     });
     return input;
   }
