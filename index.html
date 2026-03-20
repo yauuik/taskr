@@ -1539,24 +1539,21 @@ function R(){
     let searchT=null;
     sIn.addEventListener("input",e=>{
       s.sq=e.target.value;
-      // Live filter without full re-render (no keyboard flash)
       if(searchT)clearTimeout(searchT);
-      // Immediate DOM filter
-      document.querySelectorAll("[data-id]").forEach(row=>{
-        const id=row.getAttribute("data-id");
-        const p=s.p.find(x=>x.id===id);
-        if(p)row.style.display=matchSearch(p)?"":"none";
+      // Defer DOM filter to next frame (don't interfere with cursor)
+      requestAnimationFrame(()=>{
+        document.querySelectorAll("[data-id]").forEach(row=>{
+          const id=row.getAttribute("data-id");
+          const p=s.p.find(x=>x.id===id);
+          if(p)row.style.display=matchSearch(p)?"":"none";
+        });
+        const cnt=sb2.querySelector("[data-search-count]");
+        if(cnt){const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;cnt.textContent=total+" résultat"+(total!==1?"s":"");}
       });
-      // Update count
-      const cnt=sb2.querySelector("[data-search-count]");
-      if(cnt){const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;cnt.textContent=total+" résultat"+(total!==1?"s":"");}
-      // Delayed full re-render only if user stopped typing
-      searchT=setTimeout(()=>{
-        if(document.activeElement!==sIn){s._searchFocus=true;R();}
-      },1500);
+      // Full re-render only on blur
     });
-    sIn.addEventListener("blur",()=>{setTimeout(()=>{if(s.search)R();},200);});
-    sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s.search=false;s.sq="";R();}});
+    sIn.addEventListener("blur",()=>{setTimeout(()=>{if(s.search&&!s._searchClosing)R();},300);});
+    sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s._searchClosing=true;s.search=false;s.sq="";R();setTimeout(()=>{s._searchClosing=false;},100);}});
     sb2.append(sIn);
     if(s._searchFocus){s._searchFocus=false;requestAnimationFrame(()=>sIn.focus());}
     // Clear button
