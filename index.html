@@ -2151,6 +2151,7 @@ function rCalc(){
   updateResult();
 
   ov.append(m);document.getElementById("app").append(ov);
+  requestAnimationFrame(()=>{arrIn.focus();arrIn.select();});
 }
 
 function rCfm(){
