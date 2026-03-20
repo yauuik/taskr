@@ -1182,6 +1182,35 @@ function mkRow(p){
         return b;
       }
       tb2.append(tb2Btn("B","bold"),tb2Btn("I","italic"),tb2Btn("U","underline"),tb2Btn("—","insertHorizontalRule"),tb2Btn("• Liste","insertUnorderedList"),tb2Btn("1. Liste","insertOrderedList"));
+      // Source toggle
+      const srcBtn=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"4px 8px",borderRadius:"4px",fontSize:"11px",fontWeight:"600",color:"var(--muted)",fontFamily:"monospace",lineHeight:"1",marginLeft:"auto"}});
+      srcBtn.textContent="</>"; 
+      let srcMode=false;
+      const srcArea=h("textarea",{style:{display:"none",flex:"1",padding:"14px 16px",fontSize:"12px",fontFamily:"monospace",lineHeight:"1.6",color:"var(--text)",background:"var(--card)",border:"none",outline:"none",resize:"none",whiteSpace:"pre-wrap",wordBreak:"break-all"}});
+      srcBtn.addEventListener("click",()=>{
+        srcMode=!srcMode;
+        if(srcMode){
+          srcArea.value=fullNote.innerHTML;
+          fullNote.style.display="none";
+          srcArea.style.display="block";
+          srcBtn.style.color="var(--accent)";
+          srcArea.focus();
+        } else {
+          fullNote.innerHTML=srcArea.value;
+          up(p.id,{note:fullNote.innerHTML},true);
+          noteDiv.innerHTML=fullNote.innerHTML;
+          fullNote.style.display="";
+          srcArea.style.display="none";
+          srcBtn.style.color="var(--muted)";
+          fullNote.focus();
+        }
+      });
+      srcArea.addEventListener("input",()=>{
+        fullNote.innerHTML=srcArea.value;
+        up(p.id,{note:fullNote.innerHTML},true);
+        noteDiv.innerHTML=fullNote.innerHTML;
+      });
+      tb2.append(srcBtn);
       m.append(tb2);
       // Full editor
       const fullNote=h("div",{contentEditable:"true",style:{padding:"14px 16px",fontSize:"13px",fontFamily:"inherit",lineHeight:"1.7",color:"var(--text)",outline:"none",flex:"1",overflowY:"auto",wordBreak:"break-word"}});
@@ -1201,6 +1230,7 @@ function mkRow(p){
         if(html2){ev2.preventDefault();const c2=html2.replace(/\s*style\s*=\s*"[^"]*"/gi,"").replace(/\s*style\s*=\s*'[^']*'/gi,"").replace(/\s*class\s*=\s*"[^"]*"/gi,"").replace(/\s*class\s*=\s*'[^']*'/gi,"").replace(/<font[^>]*>/gi,"").replace(/<\/font>/gi,"");document.execCommand("insertHTML",false,c2);}
       });
       m.append(fullNote);
+      m.append(srcArea);
       ov.append(m);
       document.getElementById("app").append(ov);
       fullNote.focus();
