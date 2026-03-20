@@ -1098,8 +1098,6 @@ function mkRow(p){
     }
     dateRow.append(calIco,dateIn);
     if(p.due){
-      const db2=dateBadge(p.due);
-      if(db2)dateRow.append(db2);
       dateRow.append(h("button",{style:{background:"none",border:"none",fontSize:"14px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",lineHeight:"1",marginLeft:"4px"},onClick:()=>{up(p.id,{due:null});}},"×"));
     }
     panel.append(dateRow);
