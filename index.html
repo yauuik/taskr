@@ -745,11 +745,13 @@ function up(id,patch,skipRender){
     if(!d.length)await sb(DF);
     lsSave();
     s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");
-  }catch{
+  }catch(err){
     // Fallback: try localStorage
     const ls=lsLoad();
     if(ls&&ls.length){s.p=ls;s.sy="error";slog("⚠","Offline — localStorage ("+ls.length+" projets)");}
     else{s.p=DF;s.sy="error";slog("✕","Erreur chargement");}
+    // Debug: show error
+    setTimeout(()=>toast("Sync erreur: "+(err?.message||err||"unknown"),null,8000),500);
   }
   s.ok=true;R();document.addEventListener("keydown",onK);
 })();
