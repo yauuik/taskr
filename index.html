@@ -658,10 +658,11 @@ async function lb(){
   const r=await fetch(BU+"/latest",{headers:HD});
   if(!r.ok)throw 0;
   const rec=(await r.json()).record||{};
-  return{projects:rec.projects||[],ts:rec._ts||0};
+  return{projects:rec.projects||[],ts:rec._ts||0,prefs:rec._prefs||{}};
 }
 async function sb(p){
-  const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p,_ts:Date.now()})});
+  const prefs={dateSort:s._dateSort||null};
+  const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p,_ts:Date.now(),_prefs:prefs})});
   if(!r.ok)throw 0;
 }
 function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(s.p));localStorage.setItem(LS_KEY+"_ts",Date.now()+"");}catch{}}
@@ -712,7 +713,7 @@ setInterval(async()=>{
     const remote=await lb();
     cloudLoaded=true;
     if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
-      s.p=remote.projects;lsSave();slog("↓","Sync cloud");qR();
+      s.p=remote.projects;if(remote.prefs.dateSort!==undefined)s._dateSort=remote.prefs.dateSort;lsSave();slog("↓","Sync cloud");qR();
     }
   }catch{}
   lastPoll=Date.now();
@@ -725,7 +726,7 @@ document.addEventListener("visibilitychange",async()=>{
   try{
     const remote=await lb();
     if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
-      s.p=remote.projects;lsSave();slog("↓","Sync retour");qR();
+      s.p=remote.projects;if(remote.prefs.dateSort!==undefined)s._dateSort=remote.prefs.dateSort;lsSave();slog("↓","Sync retour");qR();
     }
   }catch{}
   lastPoll=Date.now();
@@ -745,6 +746,7 @@ function up(id,patch,skipRender){
     slog("↓","Chargement…");
     const d=await lb();
     s.p=d.projects.length?d.projects:DF;
+    if(d.prefs.dateSort!==undefined)s._dateSort=d.prefs.dateSort;
     if(!d.projects.length)await sb(DF);
     lsSave();cloudLoaded=true;
     s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");
