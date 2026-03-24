@@ -657,14 +657,16 @@ const LS_KEY="taskr-data";
 async function lb(){
   const r=await fetch(BU+"/latest",{headers:HD});
   if(!r.ok)throw 0;
-  return(await r.json()).record?.projects||[];
+  const rec=(await r.json()).record||{};
+  return{projects:rec.projects||[],ts:rec._ts||0};
 }
 async function sb(p){
-  const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p})});
+  const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p,_ts:Date.now()})});
   if(!r.ok)throw 0;
 }
-function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(s.p));}catch{}}
+function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(s.p));localStorage.setItem(LS_KEY+"_ts",Date.now()+"");}catch{}}
 function lsLoad(){try{const d=localStorage.getItem(LS_KEY);return d?JSON.parse(d):null;}catch{return null;}}
+function lsTs(){try{return parseInt(localStorage.getItem(LS_KEY+"_ts"))||0;}catch{return 0;}}
 
 // Debounced cloud save (800ms)
 function save(){
@@ -674,10 +676,8 @@ function save(){
   svT=setTimeout(async()=>{
     try{await sb(s.p);s.sy="synced";slog("☁","Sauvegardé ("+s.p.length+" projets)");notifyTabs();}
     catch{s.sy="error";slog("✕","Erreur sauvegarde");}
-    // Only re-render sync indicator, not the whole UI if editing
     if(!s.ed){qR();}
     else{
-      // Just update sync dot without full re-render
       const dot=document.querySelector("[data-sync-dot]");
       if(dot)dot.style.color=s.sy==="synced"?"var(--green)":s.sy==="error"?"var(--red)":"var(--amber)";
     }
@@ -708,8 +708,8 @@ setInterval(async()=>{
   if(s.ed||s.sy==="saving")return;
   try{
     const remote=await lb();
-    if(JSON.stringify(remote)!==JSON.stringify(s.p)){
-      s.p=remote;lsSave();slog("↓","Sync cloud");qR();
+    if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
+      s.p=remote.projects;lsSave();slog("↓","Sync cloud");qR();
     }
   }catch{}
   lastPoll=Date.now();
@@ -721,8 +721,8 @@ document.addEventListener("visibilitychange",async()=>{
   if(Date.now()-lastPoll<2000)return;
   try{
     const remote=await lb();
-    if(JSON.stringify(remote)!==JSON.stringify(s.p)){
-      s.p=remote;lsSave();slog("↓","Sync retour");qR();
+    if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
+      s.p=remote.projects;lsSave();slog("↓","Sync retour");qR();
     }
   }catch{}
   lastPoll=Date.now();
@@ -741,8 +741,8 @@ function up(id,patch,skipRender){
   try{
     slog("↓","Chargement…");
     const d=await lb();
-    s.p=d.length?d:DF;
-    if(!d.length)await sb(DF);
+    s.p=d.projects.length?d.projects:DF;
+    if(!d.projects.length)await sb(DF);
     lsSave();
     s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");
   }catch(err){
