@@ -1224,7 +1224,7 @@ function mkRow(p){
       tb2.append(srcBtn);
       m.append(tb2);
       // Full editor
-      const fullNote=h("div",{contentEditable:"true",style:{padding:"14px 16px",fontSize:"13px",fontFamily:"inherit",lineHeight:"1.7",color:"var(--text)",outline:"none",flex:"1",overflowY:"auto",wordBreak:"break-word"}});
+      const fullNote=h("div",{contentEditable:"true",style:{padding:"14px 16px",fontSize:"14px",fontFamily:"inherit",lineHeight:"1.6",color:"var(--text)",outline:"none",flex:"1",overflowY:"auto",wordBreak:"break-word"}});
       const curVal=getNote(p);
       if(curVal){
         if(curVal.includes("<")&&curVal.includes(">"))fullNote.innerHTML=curVal;
