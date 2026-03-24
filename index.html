@@ -669,8 +669,10 @@ function lsLoad(){try{const d=localStorage.getItem(LS_KEY);return d?JSON.parse(d
 function lsTs(){try{return parseInt(localStorage.getItem(LS_KEY+"_ts"))||0;}catch{return 0;}}
 
 // Debounced cloud save (800ms)
+let cloudLoaded=false;// true only after successful lb() at init
 function save(){
   lsSave();
+  if(!cloudLoaded){slog("⚠","Save local only (cloud pas chargé)");return;}
   s.sy="saving";
   if(svT)clearTimeout(svT);
   svT=setTimeout(async()=>{
@@ -708,6 +710,7 @@ setInterval(async()=>{
   if(s.ed||s.sy==="saving")return;
   try{
     const remote=await lb();
+    cloudLoaded=true;
     if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
       s.p=remote.projects;lsSave();slog("↓","Sync cloud");qR();
     }
@@ -743,7 +746,7 @@ function up(id,patch,skipRender){
     const d=await lb();
     s.p=d.projects.length?d.projects:DF;
     if(!d.projects.length)await sb(DF);
-    lsSave();
+    lsSave();cloudLoaded=true;
     s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");
   }catch(err){
     // Fallback: try localStorage
