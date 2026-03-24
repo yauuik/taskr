@@ -1006,7 +1006,7 @@ function mkRow(p){
     const top=h("div",{className:"crd-top"});
     const nameWrap=mentionField({
       value:p.name,
-      style:{fontSize:"15px",fontWeight:"500",background:"transparent",padding:"0"},
+      style:{fontSize:"15px",fontWeight:"500",background:"var(--card)",padding:"8px 12px",borderRadius:"8px",border:"1.5px solid var(--border)"},
       onInput:v=>up(p.id,{name:capFirst(v)},true),
       onEnter:()=>{s.ed=null;s.noteEdit=false;R();},
       focusEnd:true
@@ -1486,8 +1486,17 @@ function R(){
     return false;
   }
 
-  const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden&&matchSearch(p)).sort(urgSort);
-  const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden&&matchSearch(p)).sort(urgSort);
+  // Date sort: asc/desc/off
+  function dateSort(a,b){
+    const da=a.due||"9999";
+    const db2x=b.due||"9999";
+    if(s._dateSort==="asc")return da.localeCompare(db2x);
+    return db2x.localeCompare(da);
+  }
+  const sortFn=s._dateSort?dateSort:urgSort;
+
+  const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden&&matchSearch(p)).sort(sortFn);
+  const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden&&matchSearch(p)).sort(sortFn);
   const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden&&matchSearch(p)).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
   const hid=s.p.filter(p=>p.hidden);
 
@@ -1517,6 +1526,18 @@ function R(){
   acts.append(
     // Search
     mkIcon("Recherche",["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z","M21 21l-4.35-4.35"],()=>{s.search=!s.search;s.sq="";R();}),
+    // Sort by date
+    (()=>{
+      const sortLabel=s._dateSort==="asc"?"Tri date ↑":s._dateSort==="desc"?"Tri date ↓":"Tri par date";
+      const btn=mkIcon(sortLabel,["M3 6h18","M3 12h12","M3 18h6"],()=>{
+        if(!s._dateSort)s._dateSort="asc";
+        else if(s._dateSort==="asc")s._dateSort="desc";
+        else s._dateSort=null;
+        R();
+      });
+      if(s._dateSort)btn.style.color="var(--accent)";
+      return btn;
+    })(),
     // Shortcuts: ? in circle
     mkIcon("Raccourcis",["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z","M9.5 9a2.5 2.5 0 0 1 4.9-.5c0 1.5-2.4 2-2.4 3.5","M12 17h.01"],()=>{s.keys=true;R();}),
     // Markdown: code brackets
