@@ -1239,8 +1239,11 @@ function mkRow(p){
       fullNote.dataset.ph="Notes, liens, idées…";
       fullNote.addEventListener("input",()=>{
         up(p.id,{note:fullNote.innerHTML},true);
-        // Sync back to inline editor
         noteDiv.innerHTML=fullNote.innerHTML;
+      });
+      fullNote.addEventListener("click",e=>{
+        const link=e.target.closest("a");
+        if(link){e.preventDefault();window.open(link.href,"_blank");}
       });
       fullNote.addEventListener("paste",ev2=>{
         const html2=(ev2.clipboardData||window.clipboardData).getData("text/html");
