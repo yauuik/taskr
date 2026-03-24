@@ -702,7 +702,7 @@ if(bc)bc.onmessage=()=>{
   }
 };
 
-// Polling — check jsonbin every 20s (skip if editing or just saved)
+// Polling — check jsonbin every 10s (skip if editing or just saved)
 let lastPoll=0;
 setInterval(async()=>{
   if(s.ed||s.sy==="saving")return;
@@ -713,12 +713,12 @@ setInterval(async()=>{
     }
   }catch{}
   lastPoll=Date.now();
-},20000);
+},10000);
 
 // Visibility — sync immediately when tab becomes visible
 document.addEventListener("visibilitychange",async()=>{
-  if(document.hidden||s.ed)return;
-  if(Date.now()-lastPoll<5000)return;// skip if just polled
+  if(document.hidden)return;
+  if(Date.now()-lastPoll<2000)return;
   try{
     const remote=await lb();
     if(JSON.stringify(remote)!==JSON.stringify(s.p)){
