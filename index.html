@@ -1790,22 +1790,57 @@ function R(){
       // Title
       sheet.append(h("div",{style:{fontSize:"15px",fontWeight:"600",color:"var(--text)",marginBottom:"12px"}},"Nouvelle tâche"));
       // Input
+      let sheetDate=null;
       const addWrap=mentionField({
         value:"",
         placeholder:"Nom de la tâche…",
         style:{fontSize:"16px",padding:"12px",border:"1.5px solid var(--border)",borderRadius:"8px",background:"var(--card)",width:"100%"},
         onInput:v=>{s.an=v;},
         onEnter:()=>{
-          if(s.an.trim()){qadd();ov.remove();}
+          if(s.an.trim()){
+            const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",tasks:[],note:""};
+            if(sheetDate)n.due=sheetDate;
+            ps([n,...s.p]);s.an="";ov.remove();
+          }
         },
         focusEnd:true
       });
       sheet.append(addWrap);
-      // Footer with buttons
-      const sheetFoot=h("div",{style:{display:"flex",justifyContent:"flex-end",gap:"8px",marginTop:"12px"}});
+      // Footer: date left, buttons right
+      const sheetFoot=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginTop:"12px"}});
+      // Date button
+      const sheetDateBtn=h("button",{style:{display:"inline-flex",alignItems:"center",gap:"5px",padding:"8px 12px",borderRadius:"8px",border:"1px solid var(--border)",fontSize:"13px",color:"var(--sec)",cursor:"pointer",background:"transparent",fontFamily:"inherit",position:"relative"}});
+      const sdIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
+      sdIco.setAttribute("width","14");sdIco.setAttribute("height","14");sdIco.setAttribute("viewBox","0 0 16 16");sdIco.setAttribute("fill","none");
+      const sdr1=document.createElementNS("http://www.w3.org/2000/svg","rect");
+      sdr1.setAttribute("x","1.5");sdr1.setAttribute("y","3");sdr1.setAttribute("width","13");sdr1.setAttribute("height","11.5");sdr1.setAttribute("rx","2");sdr1.setAttribute("stroke","currentColor");sdr1.setAttribute("stroke-width","1.5");
+      const sdr2=document.createElementNS("http://www.w3.org/2000/svg","line");
+      sdr2.setAttribute("x1","1.5");sdr2.setAttribute("y1","7");sdr2.setAttribute("x2","14.5");sdr2.setAttribute("y2","7");sdr2.setAttribute("stroke","currentColor");sdr2.setAttribute("stroke-width","1.5");
+      sdIco.append(sdr1,sdr2);
+      const sdLabel=document.createTextNode("Date");
+      sheetDateBtn.append(sdIco,sdLabel);
+      const sdInput=h("input",{type:"date",style:{position:"absolute",opacity:"0",width:"0",height:"0"},value:""});
+      sdInput.setAttribute("min",new Date().toISOString().slice(0,10));
+      sdInput.addEventListener("change",e=>{
+        sheetDate=e.target.value||null;
+        sdLabel.textContent=sheetDate?shortDt(sheetDate):"Date";
+        sheetDateBtn.style.color=sheetDate?"var(--accent)":"var(--sec)";
+      });
+      sheetDateBtn.append(sdInput);
+      sheetDateBtn.addEventListener("click",e=>{e.stopPropagation();sdInput.showPicker?.();sdInput.click();});
+      sheetFoot.append(sheetDateBtn);
+      // Spacer
+      sheetFoot.append(h("div",{style:{flex:"1"}}));
+      // Buttons
       sheetFoot.append(
         h("button",{style:{padding:"10px 18px",borderRadius:"8px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:"14px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";ov.remove();}},"Annuler"),
-        h("button",{style:{padding:"10px 18px",borderRadius:"8px",border:"none",background:"var(--accent)",color:"#fff",fontSize:"14px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{if(s.an.trim()){qadd();ov.remove();}}},"Ajouter")
+        h("button",{style:{padding:"10px 18px",borderRadius:"8px",border:"none",background:"var(--accent)",color:"#fff",fontSize:"14px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{
+          if(s.an.trim()){
+            const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",tasks:[],note:""};
+            if(sheetDate)n.due=sheetDate;
+            ps([n,...s.p]);s.an="";ov.remove();
+          }
+        }},"Ajouter")
       );
       sheet.append(sheetFoot);
       ov.append(sheet);
