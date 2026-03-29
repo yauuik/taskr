@@ -2182,7 +2182,18 @@ function rCalc(){
 
   const WORK=7*60+10;// 7h10 en minutes
   let arrival=settings._calcArr||"08:00";
-  let pause=settings._calcPause||30;
+  let pauseStart=settings._calcPauseStart||"12:00";
+  let pauseEnd=settings._calcPauseEnd||"12:30";
+
+  function calcPause(){
+    const [sh,sm]=(pauseStart||"").split(":").map(Number);
+    const [eh,em]=(pauseEnd||"").split(":").map(Number);
+    if(isNaN(sh)||isNaN(sm)||isNaN(eh)||isNaN(em))return 30;
+    const diff=(eh*60+em)-(sh*60+sm);
+    return Math.max(30,diff);// minimum 30 min
+  }
+
+  let pause=calcPause();
 
   function calcEnd(arr,pau){
     const [hh,mm]=arr.split(":").map(Number);
@@ -2218,9 +2229,25 @@ function rCalc(){
     return{diff,label:sign+Math.floor(abs/60)+"h"+String(abs%60).padStart(2,"0")};
   }
 
+  // Pause duration display
+  const pauseInfo=h("span",{style:{fontSize:"11px",color:"var(--muted)",fontFamily:"monospace"}});
+  function updatePauseInfo(){
+    const raw=calcPause();
+    const [sh,sm]=(pauseStart||"").split(":").map(Number);
+    const [eh,em]=(pauseEnd||"").split(":").map(Number);
+    const realDiff=(!isNaN(sh)&&!isNaN(sm)&&!isNaN(eh)&&!isNaN(em))?(eh*60+em)-(sh*60+sm):0;
+    if(realDiff>0&&realDiff<30){
+      pauseInfo.textContent="= 30 min (min.)";pauseInfo.style.color="var(--amber)";
+    } else {
+      pauseInfo.textContent="= "+raw+" min";pauseInfo.style.color="var(--muted)";
+    }
+  }
+
   function updateResult(){
+    pause=calcPause();
     resultTime.textContent=calcEnd(arrival,pause);
-    settings._calcArr=arrival;settings._calcPause=pause;settings._calcDep=departure;saveSettings(settings);
+    settings._calcArr=arrival;settings._calcPauseStart=pauseStart;settings._calcPauseEnd=pauseEnd;settings._calcDep=departure;saveSettings(settings);
+    updatePauseInfo();
     // Overtime
     const ot=calcOvertime();
     if(ot){
@@ -2235,7 +2262,6 @@ function rCalc(){
       resultSub.textContent="Journée de 7h10";
       resultSub.style.marginTop="4px";
     }
-    // Update departure input border
     if(depIn)depIn.style.color=departure?"var(--text)":"var(--muted)";
     // Update quick buttons active state
     qp.querySelectorAll("button").forEach(b=>{
@@ -2275,25 +2301,37 @@ function rCalc(){
   arrRow.append(arrIn);
   m.append(arrRow);
 
-  // Pause input (minutes)
-  const pauseRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid var(--border)"}});
-  pauseRow.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Pause midi"));
-  const pauseWrap=h("div",{style:{display:"flex",alignItems:"center",gap:"6px"}});
-  const pauseIn=h("input",{type:"number",value:pause,min:"0",max:"120",step:"5",style:{fontSize:"14px",padding:"6px 8px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"60px"}});
-  pauseIn.addEventListener("input",e=>{pause=parseInt(e.target.value)||0;updateResult();});
-  pauseIn.addEventListener("focus",()=>{pauseIn.style.borderColor="var(--accent)";});
-  pauseIn.addEventListener("blur",()=>{pauseIn.style.borderColor="var(--border)";});
-  pauseWrap.append(pauseIn,h("span",{style:{fontSize:"11px",color:"var(--muted)"}},"min"));
-  pauseRow.append(pauseWrap);
+  // Pause midi — début + fin
+  const pauseRow=h("div",{style:{padding:"10px 0",borderBottom:"1px solid var(--border)"}});
+  const pauseLabel=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px"}});
+  pauseLabel.append(h("span",{style:{fontSize:"13px",color:"var(--text)",fontWeight:"500"}},"Pause midi"));
+  pauseLabel.append(pauseInfo);
+  pauseRow.append(pauseLabel);
+  const pauseTimes=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",justifyContent:"center"}});
+  const psIn=timeInput(pauseStart,v=>{pauseStart=v;updateResult();});
+  const peIn=timeInput(pauseEnd,v=>{pauseEnd=v;updateResult();});
+  pauseTimes.append(psIn,h("span",{style:{color:"var(--muted)",fontSize:"13px"}},"→"),peIn);
+  pauseRow.append(pauseTimes);
   m.append(pauseRow);
 
-  // Quick pause buttons
+  // Quick pause buttons (set end time based on start + duration)
   const qp=h("div",{style:{display:"flex",gap:"6px",padding:"12px 0",justifyContent:"center"}});
   [30,45,60,90].forEach(min=>{
     const active=pause===min;
     const b=h("button",{style:{padding:"4px 12px",borderRadius:"6px",fontSize:"11px",fontWeight:"600",cursor:"pointer",border:"1.5px solid "+(active?"var(--accent)":"var(--border)"),background:active?"var(--accent)":"transparent",color:active?"#fff":"var(--sec)",fontFamily:"inherit",transition:"all .15s"}});
     b.textContent=min+"'";
-    b.addEventListener("click",()=>{pause=min;pauseIn.value=min;updateResult();});
+    b.addEventListener("click",()=>{
+      // Calculate end from start + duration
+      const [sh,sm]=(pauseStart||"12:00").split(":").map(Number);
+      if(!isNaN(sh)&&!isNaN(sm)){
+        const total=sh*60+sm+min;
+        const nh=Math.floor(total/60)%24;
+        const nm=total%60;
+        pauseEnd=String(nh).padStart(2,"0")+":"+String(nm).padStart(2,"0");
+        peIn.value=pauseEnd;
+      }
+      updateResult();
+    });
     qp.append(b);
   });
   m.append(qp);
