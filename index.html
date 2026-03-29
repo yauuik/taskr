@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://db.onlinewebfonts.com/c/6d2ac8672f2eb25e2d0f0b52465f00f8?family=IBM+3270" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -281,9 +282,12 @@ const firebaseConfig={
   appId:"1:144985629094:web:78fe23991397ce1bcd2f67"
 };
 firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
 const db=firebase.database();
 const dbRef=db.ref("taskr");
 const DF=[];
+// Sign in anonymously (required for DB rules)
+let authReady=auth.signInAnonymously().catch(e=>console.warn("Auth:",e));
 
 // ─── Team (mentions @) ───
 const TEAM=["Larissa","Bryan","Caroline","Aurélie","Fleur","Erwin","Jelle","Maëlysse","Stéphanie","Véronique","Eveline","Laurence","Jeremie","Stanny","Dan","Vincent","Cenk","Alexandre","Antoine","Charlotte"];
@@ -826,6 +830,7 @@ function up(id,patch,skipRender){
 (async()=>{
   try{
     slog("↓","Chargement…");
+    await authReady;// wait for anonymous auth
     const snap=await dbRef.once("value");
     const data=snap.val();
     if(data&&data.projects&&data.projects.length){
