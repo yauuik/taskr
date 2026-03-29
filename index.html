@@ -757,7 +757,7 @@ if(bc)bc.onmessage=()=>{
   }
 };
 
-// Polling — check jsonbin every 10s (skip if editing or just saved)
+// Polling — check jsonbin every 30s (skip if editing or just saved)
 let lastPoll=0;
 setInterval(async()=>{
   if(s.ed||s.sy==="saving")return;
@@ -769,7 +769,7 @@ setInterval(async()=>{
     }
   }catch{}
   lastPoll=Date.now();
-},10000);
+},30000);
 
 // Visibility — sync immediately when tab becomes visible
 document.addEventListener("visibilitychange",async()=>{
