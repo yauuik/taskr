@@ -1959,13 +1959,13 @@ function R(){
     calNav.append(navPrev,h("div",{style:{display:"flex",alignItems:"center",gap:"10px"}},h("span",{style:{fontSize:"15px",fontWeight:"700",color:"var(--dark)"}},weekLabel),navToday),navNext);
     w.append(calNav);
 
-    // Collect tasks with dates
+    // Collect tasks with dates (exclude Done)
     const allTasks=[];
     s.p.forEach(p=>{
-      if(p.hidden)return;
+      if(p.hidden||p.status==="Done")return;
       if(p.due)allTasks.push({name:p.name,due:p.due,status:p.status,id:p.id,type:"project"});
       (p.tasks||[]).forEach((t,i)=>{
-        if(t.due)allTasks.push({name:t.text,due:t.due,status:tSt(t),id:p.id,idx:i,type:"subtask",parentName:p.name});
+        if(t.due&&tSt(t)!=="done")allTasks.push({name:t.text,due:t.due,status:tSt(t),id:p.id,idx:i,type:"subtask",parentName:p.name});
       });
     });
 
