@@ -8,8 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <title>Task.r</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='10' width='80' height='80' rx='16' fill='none' stroke='%23FDAB3D' stroke-width='10'/><line x1='32' y1='50' x2='68' y2='50' stroke='%23FDAB3D' stroke-width='8' stroke-linecap='round'/></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://db.onlinewebfonts.com/c/6d2ac8672f2eb25e2d0f0b52465f00f8?family=IBM+3270" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -46,24 +45,6 @@ span.flatpickr-weekday{color:var(--sec) !important;font-weight:600 !important;fo
   --text:#e8e8e8;--sec:#a0a0a0;--muted:#5a5a5a;
   --border:#3a3a3a;--hover:#333333;
 }
-:root.theme-ims-dark{
-  --bg:#000000;--card:#0a0a0a;--dark:#55bbff;
-  --accent:#55bbff;--green:#44dd44;--amber:#ffff00;--red:#ff4444;--blue:#55bbff;
-  --text:#44dd44;--sec:#55bbff;--muted:#336688;
-  --border:#1a2a44;--hover:#0d0d1a;
-}
-:root.theme-ims-blue{
-  --bg:#001a33;--card:#002244;--dark:#44ff44;
-  --accent:#5599ff;--green:#44ff44;--amber:#ffff00;--red:#ff5555;--blue:#5599ff;
-  --text:#33dd33;--sec:#55bb88;--muted:#336655;
-  --border:#1a4466;--hover:#002b4d;
-}
-:root.theme-ims-green{
-  --bg:#001200;--card:#001a00;--dark:#33ff33;
-  --accent:#33ff33;--green:#33ff33;--amber:#ccff33;--red:#ff4444;--blue:#33ff33;
-  --text:#33ff33;--sec:#22aa22;--muted:#1a6622;
-  --border:#1a3a1a;--hover:#0d220d;
-}
 .theme-dark [contenteditable]{background:var(--card) !important;color:var(--text) !important;border-color:var(--border) !important;}
 .theme-dark input,.theme-dark textarea{background:var(--card) !important;color:var(--text) !important;border-color:var(--border) !important;}
 .theme-dark .ac-list{background:var(--card) !important;border-color:var(--border) !important;}
@@ -71,20 +52,6 @@ span.flatpickr-weekday{color:var(--sec) !important;font-weight:600 !important;fo
 .theme-dark .mod{background:var(--card) !important;}
 .theme-dark .cfm{background:var(--card) !important;}
 .theme-dark .quick{background:var(--card) !important;border-color:var(--border) !important;}
-[class*="theme-ims"]{font-family:'IBM 3270','IBM Plex Mono','Courier New',monospace !important;}
-[class*="theme-ims"] body{font-family:'IBM 3270','IBM Plex Mono','Courier New',monospace !important;font-size:16px !important;}
-[class*="theme-ims"] .topbar h1{letter-spacing:.05em;text-transform:uppercase;}
-[class*="theme-ims"] .mention{background:rgba(0,224,255,.12) !important;color:var(--accent) !important;border-radius:2px !important;}
-[class*="theme-ims"] .bx,[class*="theme-ims"] .bx-s{border-color:var(--sec);border-radius:0 !important;}
-[class*="theme-ims"] .crd{border-radius:0 !important;}
-[class*="theme-ims"] .row:hover{border-radius:0 !important;}
-[class*="theme-ims"] .row-urgent{border-radius:0 !important;}
-[class*="theme-ims"] .mod{border-radius:2px 2px 0 0 !important;}
-[class*="theme-ims"] .itasks{border-left-style:solid !important;}
-[class*="theme-ims"] [contenteditable]{background:var(--card) !important;color:var(--text) !important;border-color:var(--border) !important;font-family:'IBM 3270','IBM Plex Mono','Courier New',monospace !important;border-radius:0 !important;}
-[class*="theme-ims"] input,[class*="theme-ims"] textarea{background:var(--card) !important;color:var(--text) !important;border-color:var(--border) !important;font-family:'IBM 3270','IBM Plex Mono','Courier New',monospace !important;border-radius:0 !important;}
-[class*="theme-ims"] .ac-list{background:var(--card) !important;border-color:var(--border) !important;border-radius:0 !important;}
-[class*="theme-ims"] .ac-item.sel{background:var(--hover) !important;}
 [contenteditable] a{color:var(--accent) !important;text-decoration:underline !important;cursor:pointer !important;}
 [contenteditable] table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px;}
 [contenteditable] th,[contenteditable] td{border:1px solid var(--border);padding:4px 8px;text-align:left;}
@@ -98,7 +65,6 @@ span.flatpickr-weekday{color:var(--sec) !important;font-weight:600 !important;fo
 [contenteditable] h2{font-size:15px;margin:6px 0 4px;}
 [contenteditable] h3{font-size:14px;margin:6px 0 3px;}
 [contenteditable] h4,[contenteditable] h5,[contenteditable] h6{font-size:13px;margin:4px 0 2px;}
-[class*="theme-ims"] ::selection{background:var(--accent);color:#000;}
 body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom,0);-webkit-tap-highlight-color:transparent;font-size:13px;}
 ::selection{background:var(--accent);color:#fff;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--muted);border-radius:2px;}
@@ -1756,12 +1722,12 @@ function R(){
 
   // Apply theme
   // Apply theme — auto dark if no explicit theme set
-  let appliedTheme=settings.theme||"";
-  if(!appliedTheme&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)appliedTheme="dark";
-  if(appliedTheme==="light")appliedTheme="";
+  let appliedTheme=settings.theme||"auto";
+  if(appliedTheme==="auto")appliedTheme=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"";
+  else if(appliedTheme==="light")appliedTheme="";
   document.documentElement.className=appliedTheme?"theme-"+appliedTheme:"";
 
-  const lwMap={narrow:"520px",normal:"680px",wide:"900px"};
+  const lwMap={normal:"680px",wide:"900px"};
   const w=h("div",{className:"wrap"});
   w.style.maxWidth=lwMap[settings.layoutWidth||"normal"];
 
@@ -2228,25 +2194,20 @@ function rSett(){
   thLeft.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}},"Apparence de l'interface"));
   thRow.append(thLeft);
   const themes=[
-    {key:"light",label:"Normal",bg:"#F6F7FB",fg:"#323338"},
-    {key:"dark",label:"Dark",bg:"#1e1e1e",fg:"#e8e8e8"},
-    {key:"ims-dark",label:"IMS Dark",bg:"#000",fg:"#44dd44"},
-    {key:"ims-blue",label:"IMS Blue",bg:"#002244",fg:"#33dd33"},
-    {key:"ims-green",label:"IMS Green",bg:"#001a00",fg:"#33ff33"},
+    {key:"auto",label:"Auto"},
+    {key:"light",label:"Light"},
+    {key:"dark",label:"Dark"},
   ];
-  const curTheme=settings.theme||"";
+  const curTheme=settings.theme||"auto";
   const thBtns=h("div",{style:{display:"flex",gap:"4px",flexWrap:"wrap"}});
   themes.forEach(t=>{
     const active=curTheme===t.key;
-    const b=h("div",{style:{
-      width:"32px",height:"32px",borderRadius:"6px",cursor:"pointer",
-      border:active?"2px solid var(--accent)":"2px solid var(--border)",
-      background:t.bg,display:"flex",alignItems:"center",justifyContent:"center",
-      fontSize:"10px",fontWeight:"700",color:t.fg,fontFamily:"monospace",
-      transition:"border-color .15s"
+    const b=h("button",{style:{
+      padding:"4px 12px",borderRadius:"6px",fontSize:"11px",fontWeight:"600",cursor:"pointer",
+      border:"1.5px solid "+(active?"var(--accent)":"var(--border)"),
+      background:active?"var(--accent)":"transparent",color:active?"#fff":"var(--sec)",fontFamily:"inherit",transition:"all .15s"
     }});
-    b.textContent=t.key?"A":"Aa";
-    b.title=t.label;
+    b.textContent=t.label;
     b.addEventListener("click",()=>{settings.theme=t.key;saveSettings(settings);s.sett=true;R();});
     thBtns.append(b);
   });
@@ -2259,7 +2220,7 @@ function rSett(){
   lwLeft.append(h("div",{style:{fontSize:"14px",fontWeight:"500",color:"var(--text)"}},"Largeur du contenu"));
   lwLeft.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}},"Zone principale de la liste"));
   lwRow.append(lwLeft);
-  const lwOpts=[{key:"narrow",label:"Étroit",w:"520px"},{key:"normal",label:"Normal",w:"680px"},{key:"wide",label:"Large",w:"900px"}];
+  const lwOpts=[{key:"normal",label:"Normal",w:"680px"},{key:"wide",label:"Large",w:"900px"}];
   const lwCur=settings.layoutWidth||"normal";
   const lwBtns=h("div",{style:{display:"flex",gap:"4px"}});
   lwOpts.forEach(o=>{
