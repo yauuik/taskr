@@ -1609,8 +1609,10 @@ function R(){
 
   // Apply theme
   // Apply theme — auto dark if no explicit theme set
-  const autoTheme=(!settings.theme&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":settings.theme||"";
-  document.documentElement.className=autoTheme?"theme-"+autoTheme:"";
+  let appliedTheme=settings.theme||"";
+  if(!appliedTheme&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)appliedTheme="dark";
+  if(appliedTheme==="light")appliedTheme="";
+  document.documentElement.className=appliedTheme?"theme-"+appliedTheme:"";
 
   const lwMap={narrow:"520px",normal:"680px",wide:"900px"};
   const w=h("div",{className:"wrap"});
@@ -2147,7 +2149,7 @@ function rSett(){
   thLeft.append(h("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}},"Apparence de l'interface"));
   thRow.append(thLeft);
   const themes=[
-    {key:"",label:"Normal",bg:"#F6F7FB",fg:"#323338"},
+    {key:"light",label:"Normal",bg:"#F6F7FB",fg:"#323338"},
     {key:"dark",label:"Dark",bg:"#1e1e1e",fg:"#e8e8e8"},
     {key:"ims-dark",label:"IMS Dark",bg:"#000",fg:"#44dd44"},
     {key:"ims-blue",label:"IMS Blue",bg:"#002244",fg:"#33dd33"},
