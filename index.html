@@ -421,7 +421,8 @@ function onDragEnd(){
 }
 
 const gid=()=>"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const td=()=>new Date().toISOString().slice(0,10);
+function localIso(d){const dt=d||new Date();return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");}
+const td=()=>localIso();
 function capFirst(s){
   if(!s)return s;
   // Skip leading @mentions to capitalize the first real word
@@ -1198,7 +1199,7 @@ function mkRow(p){
     const dateRow=h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px",padding:"10px 12px",background:"var(--hover)",borderRadius:"8px"}});
     const calIco=mkSvg("calendar","16",{color:"var(--sec)"});
     const useFP=settings.flatpickr||false;
-    const today=new Date().toISOString().slice(0,10);
+    const today=localIso();
     const dateIn=h("input",{type:useFP?"text":"date",value:p.due||"",placeholder:useFP?"Choisir une date…":"",min:useFP?undefined:today,style:{fontSize:"13px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer",textAlign:"center"}});
     dateIn.addEventListener("change",e=>{
       const v=e.target.value;
@@ -1642,7 +1643,7 @@ function mkAddForm(opts){
   const dateLbl=document.createTextNode("Date");
   dateBtn.append(mkSvg("calendar","13"),dateLbl);
   const dateIn=h("input",{type:"date",style:{position:"absolute",opacity:"0",width:"0",height:"0"},value:""});
-  dateIn.setAttribute("min",new Date().toISOString().slice(0,10));
+  dateIn.setAttribute("min",localIso());
   dateIn.addEventListener("change",e=>{
     formDate=e.target.value||null;
     dateLbl.textContent=formDate?shortDt(formDate):"Date";
@@ -1803,7 +1804,7 @@ function R(){
     const greet=hour<12?"Bonjour":hour<18?"Bon après-midi":"Bonsoir";
     const ipCount=s.p.filter(p=>p.status==="In Progress"&&!p.hidden).length;
     const urgCount=s.p.filter(p=>!p.hidden&&p.status!=="Done"&&isUrgent(p)).length;
-    const doneToday=s.p.filter(p=>p.doneAt&&p.doneAt.slice(0,10)===new Date().toISOString().slice(0,10)).length;
+    const doneToday=s.p.filter(p=>p.doneAt&&p.doneAt.slice(0,10)===localIso()).length;
     const details=[greet+" Yannick"];
     if(ipCount)details.push(ipCount+" en cours");
     if(urgCount)details.push(urgCount+" urgent"+(urgCount>1?"es":"e"));
@@ -1970,11 +1971,11 @@ function R(){
     });
 
     const jourNoms=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
-    const todayStr=today.toISOString().slice(0,10);
+    const todayStr=localIso(today);
 
     for(let d=0;d<7;d++){
       const day=new Date(startOfWeek);day.setDate(startOfWeek.getDate()+d);
-      const dayStr=day.toISOString().slice(0,10);
+      const dayStr=localIso(day);
       const isToday=dayStr===todayStr;
       const isWeekend=d>=5;
 
@@ -2009,8 +2010,8 @@ function R(){
     }
 
     // Week summary
-    const weekStart=startOfWeek.toISOString().slice(0,10);
-    const weekEndStr=endOfWeek.toISOString().slice(0,10);
+    const weekStart=localIso(startOfWeek);
+    const weekEndStr=localIso(endOfWeek);
     const weekTasks=allTasks.filter(t=>t.due>=weekStart&&t.due<=weekEndStr);
     const weekDone=weekTasks.filter(t=>t.status==="Done"||t.status==="done").length;
     w.append(h("div",{style:{textAlign:"center",fontSize:"11px",color:"var(--muted)",padding:"16px 0 0"}},weekTasks.length+" tâche"+(weekTasks.length!==1?"s":"")+" cette semaine"+(weekDone?" · "+weekDone+" terminée"+(weekDone>1?"s":""):"")));
