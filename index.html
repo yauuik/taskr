@@ -284,6 +284,65 @@ const DF=[
 // ─── Team (mentions @) ───
 const TEAM=["Larissa","Bryan","Caroline","Aurélie","Fleur","Erwin","Jelle","Maëlysse","Stéphanie","Véronique","Eveline","Laurence","Jeremie","Stanny","Dan","Vincent","Cenk","Alexandre","Antoine","Charlotte"];
 
+// ─── SVG Icon Factory ───
+const ICONS={
+  calendar:{vb:"0 0 16 16",els:[
+    {t:"rect",a:{x:"1.5",y:"3",width:"13",height:"11.5",rx:"2",stroke:"currentColor","stroke-width":"1.5",fill:"none"}},
+    {t:"line",a:{x1:"1.5",y1:"7",x2:"14.5",y2:"7",stroke:"currentColor","stroke-width":"1.5"}},
+    {t:"line",a:{x1:"5",y1:"1.5",x2:"5",y2:"4.5",stroke:"currentColor","stroke-width":"1.5","stroke-linecap":"round"}},
+    {t:"line",a:{x1:"11",y1:"1.5",x2:"11",y2:"4.5",stroke:"currentColor","stroke-width":"1.5","stroke-linecap":"round"}}
+  ]},
+  note:{vb:"0 0 16 16",els:[
+    {t:"path",a:{d:"M2 2h12v8H5l-3 3V2z",stroke:"currentColor","stroke-width":"1.5","stroke-linejoin":"round",fill:"none"}}
+  ]},
+  person:{vb:"0 0 16 16",els:[
+    {t:"circle",a:{cx:"8",cy:"5",r:"3",stroke:"currentColor","stroke-width":"1.8",fill:"none"}},
+    {t:"path",a:{d:"M2.5 14.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5",stroke:"currentColor","stroke-width":"1.8","stroke-linecap":"round",fill:"none"}}
+  ]},
+  search:{vb:"0 0 24 24",els:[
+    {t:"circle",a:{cx:"11",cy:"11",r:"8",stroke:"currentColor","stroke-width":"2",fill:"none"}},
+    {t:"line",a:{x1:"21",y1:"21",x2:"16.65",y2:"16.65",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}}
+  ]},
+  sync:{vb:"0 0 16 16",els:[
+    {t:"path",a:{d:"M2.5 8a5.5 5.5 0 0 1 9.3-4",stroke:"currentColor","stroke-width":"1.8","stroke-linecap":"round",fill:"none"}},
+    {t:"path",a:{d:"M13.5 8a5.5 5.5 0 0 1-9.3 4",stroke:"currentColor","stroke-width":"1.8","stroke-linecap":"round",fill:"none"}},
+    {t:"path",a:{d:"M11 2l1 2.5L9.5 5",stroke:"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round",fill:"none"}},
+    {t:"path",a:{d:"M5 14l-1-2.5 2.5-.5",stroke:"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round",fill:"none"}}
+  ]},
+  sort:{vb:"0 0 24 24",els:[
+    {t:"line",a:{x1:"3",y1:"6",x2:"21",y2:"6",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}},
+    {t:"line",a:{x1:"3",y1:"12",x2:"15",y2:"12",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}},
+    {t:"line",a:{x1:"3",y1:"18",x2:"9",y2:"18",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}}
+  ]}
+};
+function mkSvg(name,size,extra){
+  const def=ICONS[name];if(!def)return document.createTextNode("");
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("width",size||"14");svg.setAttribute("height",size||"14");
+  svg.setAttribute("viewBox",def.vb);svg.setAttribute("fill","none");
+  svg.style.flexShrink="0";
+  if(extra)Object.assign(svg.style,extra);
+  def.els.forEach(el=>{
+    const e=document.createElementNS("http://www.w3.org/2000/svg",el.t);
+    Object.entries(el.a).forEach(([k,v])=>e.setAttribute(k,v));
+    svg.append(e);
+  });
+  return svg;
+}
+// ─── Paste cleanup (shared) ───
+function cleanPaste(e){
+  const html=(e.clipboardData||window.clipboardData).getData("text/html");
+  if(html){
+    e.preventDefault();
+    const clean=html.replace(/\s*style\s*=\s*"[^"]*"/gi,"").replace(/\s*style\s*=\s*'[^']*'/gi,"")
+      .replace(/\s*class\s*=\s*"[^"]*"/gi,"").replace(/\s*class\s*=\s*'[^']*'/gi,"")
+      .replace(/<font[^>]*>/gi,"").replace(/<\/font>/gi,"")
+      .replace(/<label[^>]*>/gi,"").replace(/<\/label>/gi,"")
+      .replace(/<!--\s*(?:Start|End)Fragment\s*-->/gi,"");
+    document.execCommand("insertHTML",false,clean);
+  }
+}
+
 // ─── State ───
 const SETTINGS_KEY="taskr-settings";
 function loadSettings(){try{return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{};}catch{return {};}}
@@ -396,17 +455,7 @@ function dateBadge(dateStr){
   else if(diff<=3){color="#e67e22";bg="rgba(230,126,34,.08)";} // 2-3 days
   else if(diff<=7){color="var(--amber)";bg="rgba(253,171,61,.1)";} // this week
   const label=diff===0?"Aujourd'hui":diff===-1?"Hier":diff===1?"Demain":shortDt(dateStr);
-  const ico=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  ico.setAttribute("width","11");ico.setAttribute("height","11");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";
-  const p1=document.createElementNS("http://www.w3.org/2000/svg","rect");
-  p1.setAttribute("x","1.5");p1.setAttribute("y","3");p1.setAttribute("width","13");p1.setAttribute("height","11.5");p1.setAttribute("rx","2");p1.setAttribute("stroke","currentColor");p1.setAttribute("stroke-width","1.5");
-  const p2=document.createElementNS("http://www.w3.org/2000/svg","line");
-  p2.setAttribute("x1","1.5");p2.setAttribute("y1","7");p2.setAttribute("x2","14.5");p2.setAttribute("y2","7");p2.setAttribute("stroke","currentColor");p2.setAttribute("stroke-width","1.5");
-  const p3=document.createElementNS("http://www.w3.org/2000/svg","line");
-  p3.setAttribute("x1","5");p3.setAttribute("y1","1.5");p3.setAttribute("x2","5");p3.setAttribute("y2","4.5");p3.setAttribute("stroke","currentColor");p3.setAttribute("stroke-width","1.5");p3.setAttribute("stroke-linecap","round");
-  const p4=document.createElementNS("http://www.w3.org/2000/svg","line");
-  p4.setAttribute("x1","11");p4.setAttribute("y1","1.5");p4.setAttribute("x2","11");p4.setAttribute("y2","4.5");p4.setAttribute("stroke","currentColor");p4.setAttribute("stroke-width","1.5");p4.setAttribute("stroke-linecap","round");
-  ico.append(p1,p2,p3,p4);
+  const ico=mkSvg("calendar","11");
   const badge=h("span",{style:{fontSize:"10px",fontWeight:"600",color,background:bg,padding:"2px 7px",borderRadius:"8px",whiteSpace:"nowrap",lineHeight:"1.4",display:"inline-flex",alignItems:"center",gap:"3px"}});
   badge.append(ico,document.createTextNode(label));
   return badge;
@@ -444,14 +493,7 @@ function parseTask(txt){
 function mentionSpan(name){
   const sp=h("span",{className:"mention"});
   if(settings.mentionIcon!==false){
-    const ico=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    ico.setAttribute("width","10");ico.setAttribute("height","10");ico.setAttribute("viewBox","0 0 16 16");ico.setAttribute("fill","none");ico.style.flexShrink="0";ico.style.opacity=".6";ico.style.verticalAlign="middle";ico.style.marginTop="-2px";
-    const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx","8");c.setAttribute("cy","5.5");c.setAttribute("r","3");c.setAttribute("stroke","currentColor");c.setAttribute("stroke-width","1.8");
-    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
-    p.setAttribute("d","M2.5 14.5c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5");p.setAttribute("stroke","currentColor");p.setAttribute("stroke-width","1.8");p.setAttribute("stroke-linecap","round");
-    ico.append(c,p);
-    sp.append(ico);
+    sp.append(mkSvg("person","10",{opacity:".6",verticalAlign:"middle",marginTop:"-2px"}));
   }
   const displayName=name.charAt(0).toUpperCase()+name.slice(1);
   sp.append(document.createTextNode(displayName));
@@ -1079,18 +1121,7 @@ function mkRow(p){
 
     // Date picker
     const dateRow=h("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px",padding:"10px 12px",background:"var(--hover)",borderRadius:"8px"}});
-    // Calendar icon
-    const calIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    calIco.setAttribute("width","16");calIco.setAttribute("height","16");calIco.setAttribute("viewBox","0 0 16 16");calIco.setAttribute("fill","none");calIco.style.color="var(--sec)";calIco.style.flexShrink="0";
-    const cr1=document.createElementNS("http://www.w3.org/2000/svg","rect");
-    cr1.setAttribute("x","1.5");cr1.setAttribute("y","3");cr1.setAttribute("width","13");cr1.setAttribute("height","11.5");cr1.setAttribute("rx","2");cr1.setAttribute("stroke","currentColor");cr1.setAttribute("stroke-width","1.5");
-    const cr2=document.createElementNS("http://www.w3.org/2000/svg","line");
-    cr2.setAttribute("x1","1.5");cr2.setAttribute("y1","7");cr2.setAttribute("x2","14.5");cr2.setAttribute("y2","7");cr2.setAttribute("stroke","currentColor");cr2.setAttribute("stroke-width","1.5");
-    const cr3=document.createElementNS("http://www.w3.org/2000/svg","line");
-    cr3.setAttribute("x1","5");cr3.setAttribute("y1","1.5");cr3.setAttribute("x2","5");cr3.setAttribute("y2","4.5");cr3.setAttribute("stroke","currentColor");cr3.setAttribute("stroke-width","1.5");cr3.setAttribute("stroke-linecap","round");
-    const cr4=document.createElementNS("http://www.w3.org/2000/svg","line");
-    cr4.setAttribute("x1","11");cr4.setAttribute("y1","1.5");cr4.setAttribute("x2","11");cr4.setAttribute("y2","4.5");cr4.setAttribute("stroke","currentColor");cr4.setAttribute("stroke-width","1.5");cr4.setAttribute("stroke-linecap","round");
-    calIco.append(cr1,cr2,cr3,cr4);
+    const calIco=mkSvg("calendar","16",{color:"var(--sec)"});
     const useFP=settings.flatpickr||false;
     const today=new Date().toISOString().slice(0,10);
     const dateIn=h("input",{type:useFP?"text":"date",value:p.due||"",placeholder:useFP?"Choisir une date…":"",min:useFP?undefined:today,style:{fontSize:"13px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"inherit",color:"var(--text)",background:"var(--card)",outline:"none",cursor:"pointer",textAlign:"center"}});
@@ -1306,10 +1337,7 @@ function mkRow(p){
         const link=e.target.closest("a");
         if(link){e.preventDefault();window.open(link.href,"_blank");}
       });
-      fullNote.addEventListener("paste",ev2=>{
-        const html2=(ev2.clipboardData||window.clipboardData).getData("text/html");
-        if(html2){ev2.preventDefault();const c2=html2.replace(/\s*style\s*=\s*"[^"]*"/gi,"").replace(/\s*style\s*=\s*'[^']*'/gi,"").replace(/\s*class\s*=\s*"[^"]*"/gi,"").replace(/\s*class\s*=\s*'[^']*'/gi,"").replace(/<font[^>]*>/gi,"").replace(/<\/font>/gi,"").replace(/<label[^>]*>/gi,"").replace(/<\/label>/gi,"").replace(/<!--\s*(?:Start|End)Fragment\s*-->/gi,"");document.execCommand("insertHTML",false,c2);}
-      });
+      fullNote.addEventListener("paste",cleanPaste);
       m.append(fullNote);
       m.append(srcWrap);
       ov.append(m);
@@ -1362,21 +1390,7 @@ function mkRow(p){
       const link=e.target.closest("a");
       if(link){e.preventDefault();window.open(link.href,"_blank");}
     });
-    noteDiv.addEventListener("paste",e=>{
-      const html=(e.clipboardData||window.clipboardData).getData("text/html");
-      if(html){
-        e.preventDefault();
-        // Strip all style attributes from pasted HTML
-        const clean=html.replace(/\s*style\s*=\s*"[^"]*"/gi,"")
-          .replace(/\s*style\s*=\s*'[^']*'/gi,"")
-          .replace(/\s*class\s*=\s*"[^"]*"/gi,"")
-          .replace(/\s*class\s*=\s*'[^']*'/gi,"")
-          .replace(/<font[^>]*>/gi,"").replace(/<\/font>/gi,"")
-          .replace(/<label[^>]*>/gi,"").replace(/<\/label>/gi,"")
-          .replace(/<!--\s*(?:Start|End)Fragment\s*-->/gi,"");
-        document.execCommand("insertHTML",false,clean);
-      }
-    });
+    noteDiv.addEventListener("paste",cleanPaste);
     noteDiv.addEventListener("mousedown",e=>e.stopPropagation());
     noteWrap.append(noteDiv);
     panel.append(noteWrap);
@@ -1475,11 +1489,7 @@ function mkRow(p){
   // Note icon — fixed width slot so date always aligns
   const noteSlot=h("span",{style:{display:"inline-flex",alignItems:"center",width:"14px",flexShrink:"0"}});
   if(getNote(p)){
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("width","14");svg.setAttribute("height","14");svg.setAttribute("viewBox","0 0 16 16");svg.setAttribute("fill","none");svg.style.color="var(--sec)";
-    const path=document.createElementNS("http://www.w3.org/2000/svg","path");
-    path.setAttribute("d","M2 2h12v8H5l-3 3V2z");path.setAttribute("stroke","currentColor");path.setAttribute("stroke-width","1.5");path.setAttribute("stroke-linejoin","round");
-    svg.append(path);noteSlot.append(svg);
+    noteSlot.append(mkSvg("note","14",{color:"var(--sec)"}));
   }
   meta.append(noteSlot);
   if(isDone&&p.doneAt)meta.append(h("span",{style:{color:"var(--green)",fontSize:"10px",fontFamily:"monospace"}},"✓ "+shortDt(p.doneAt)));
@@ -1579,7 +1589,9 @@ function R(){
   s.sel.forEach(id=>{if(!allIds.has(id))s.sel.delete(id);});
 
   // Apply theme
-  document.documentElement.className=settings.theme?"theme-"+settings.theme:"";
+  // Apply theme — auto dark if no explicit theme set
+  const autoTheme=(!settings.theme&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":settings.theme||"";
+  document.documentElement.className=autoTheme?"theme-"+autoTheme:"";
 
   const lwMap={narrow:"520px",normal:"680px",wide:"900px"};
   const w=h("div",{className:"wrap"});
@@ -1613,18 +1625,7 @@ function R(){
   const syncWrap=h("div",{style:{position:"relative",marginLeft:"2px"}});
   const syncDot=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",width:"28px",height:"28px",color:sc.c,cursor:"pointer"}});
   syncDot.setAttribute("data-sync-dot","1");
-  // SVG sync icon
-  const ssvg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  ssvg.setAttribute("width","13");ssvg.setAttribute("height","13");ssvg.setAttribute("viewBox","0 0 16 16");ssvg.setAttribute("fill","none");
-  const sp1=document.createElementNS("http://www.w3.org/2000/svg","path");
-  sp1.setAttribute("d","M2.5 8a5.5 5.5 0 0 1 9.3-4");sp1.setAttribute("stroke","currentColor");sp1.setAttribute("stroke-width","1.8");sp1.setAttribute("stroke-linecap","round");
-  const sp2=document.createElementNS("http://www.w3.org/2000/svg","path");
-  sp2.setAttribute("d","M13.5 8a5.5 5.5 0 0 1-9.3 4");sp2.setAttribute("stroke","currentColor");sp2.setAttribute("stroke-width","1.8");sp2.setAttribute("stroke-linecap","round");
-  const sp3=document.createElementNS("http://www.w3.org/2000/svg","path");
-  sp3.setAttribute("d","M11 2l1 2.5L9.5 5");sp3.setAttribute("stroke","currentColor");sp3.setAttribute("stroke-width","1.5");sp3.setAttribute("stroke-linecap","round");sp3.setAttribute("stroke-linejoin","round");
-  const sp4=document.createElementNS("http://www.w3.org/2000/svg","path");
-  sp4.setAttribute("d","M5 14l-1-2.5 2.5-.5");sp4.setAttribute("stroke","currentColor");sp4.setAttribute("stroke-width","1.5");sp4.setAttribute("stroke-linecap","round");sp4.setAttribute("stroke-linejoin","round");
-  ssvg.append(sp1,sp2,sp3,sp4);
+  const ssvg=mkSvg("sync","13");
   if(sc.c==="var(--amber)")ssvg.style.animation="spin .8s linear infinite";
   syncDot.append(ssvg);
   // Tooltip
@@ -1658,15 +1659,7 @@ function R(){
   // Search bar
   if(s.search){
     const sb2=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",padding:"8px 12px",background:"var(--card)",border:"1.5px solid var(--accent)",borderRadius:"10px",marginBottom:"16px",boxShadow:"0 0 0 3px rgba(97,97,255,.1)"}});
-    // Search icon
-    const sIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    sIco.setAttribute("width","14");sIco.setAttribute("height","14");sIco.setAttribute("viewBox","0 0 24 24");sIco.setAttribute("fill","none");sIco.style.color="var(--muted)";sIco.style.flexShrink="0";
-    const sc1=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    sc1.setAttribute("cx","11");sc1.setAttribute("cy","11");sc1.setAttribute("r","8");sc1.setAttribute("stroke","currentColor");sc1.setAttribute("stroke-width","2");
-    const sl1=document.createElementNS("http://www.w3.org/2000/svg","line");
-    sl1.setAttribute("x1","21");sl1.setAttribute("y1","21");sl1.setAttribute("x2","16.65");sl1.setAttribute("y2","16.65");sl1.setAttribute("stroke","currentColor");sl1.setAttribute("stroke-width","2");sl1.setAttribute("stroke-linecap","round");
-    sIco.append(sc1,sl1);
-    sb2.append(sIco);
+    sb2.append(mkSvg("search","14",{color:"var(--muted)"}));
     const sIn=h("input",{type:"text",value:s.sq||"",placeholder:"Rechercher partout…",style:{flex:"1",border:"none",outline:"none",fontSize:"14px",fontFamily:"inherit",color:"var(--text)",background:"transparent"}});
     let searchT=null;
     sIn.addEventListener("input",e=>{
@@ -1739,18 +1732,7 @@ function R(){
     const qiFoot=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",padding:"8px 16px",borderTop:"1px solid var(--border)"}});
     // Date button with SVG icon
     const dateBtn=h("button",{style:{display:"inline-flex",alignItems:"center",gap:"5px",padding:"4px 10px",borderRadius:"6px",border:"1px solid var(--border)",fontSize:"11px",color:s._qiDate?"var(--accent)":"var(--sec)",cursor:"pointer",background:"transparent",fontFamily:"inherit",position:"relative"}});
-    const dIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    dIco.setAttribute("width","13");dIco.setAttribute("height","13");dIco.setAttribute("viewBox","0 0 16 16");dIco.setAttribute("fill","none");dIco.style.flexShrink="0";
-    const dr1=document.createElementNS("http://www.w3.org/2000/svg","rect");
-    dr1.setAttribute("x","1.5");dr1.setAttribute("y","3");dr1.setAttribute("width","13");dr1.setAttribute("height","11.5");dr1.setAttribute("rx","2");dr1.setAttribute("stroke","currentColor");dr1.setAttribute("stroke-width","1.5");
-    const dr2=document.createElementNS("http://www.w3.org/2000/svg","line");
-    dr2.setAttribute("x1","1.5");dr2.setAttribute("y1","7");dr2.setAttribute("x2","14.5");dr2.setAttribute("y2","7");dr2.setAttribute("stroke","currentColor");dr2.setAttribute("stroke-width","1.5");
-    const dr3=document.createElementNS("http://www.w3.org/2000/svg","line");
-    dr3.setAttribute("x1","5");dr3.setAttribute("y1","1.5");dr3.setAttribute("x2","5");dr3.setAttribute("y2","4.5");dr3.setAttribute("stroke","currentColor");dr3.setAttribute("stroke-width","1.5");dr3.setAttribute("stroke-linecap","round");
-    const dr4=document.createElementNS("http://www.w3.org/2000/svg","line");
-    dr4.setAttribute("x1","11");dr4.setAttribute("y1","1.5");dr4.setAttribute("x2","11");dr4.setAttribute("y2","4.5");dr4.setAttribute("stroke","currentColor");dr4.setAttribute("stroke-width","1.5");dr4.setAttribute("stroke-linecap","round");
-    dIco.append(dr1,dr2,dr3,dr4);
-    dateBtn.append(dIco,document.createTextNode(s._qiDate?shortDt(s._qiDate):"Date"));
+    dateBtn.append(mkSvg("calendar","13"),document.createTextNode(s._qiDate?shortDt(s._qiDate):"Date"));
     // Hidden date input
     const dInput=h("input",{type:"date",style:{position:"absolute",opacity:"0",width:"0",height:"0",top:"0",left:"0"},value:s._qiDate||""});
     dInput.setAttribute("min",new Date().toISOString().slice(0,10));
@@ -1810,15 +1792,8 @@ function R(){
       const sheetFoot=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginTop:"12px"}});
       // Date button
       const sheetDateBtn=h("button",{style:{display:"inline-flex",alignItems:"center",gap:"5px",padding:"8px 12px",borderRadius:"8px",border:"1px solid var(--border)",fontSize:"13px",color:"var(--sec)",cursor:"pointer",background:"transparent",fontFamily:"inherit",position:"relative"}});
-      const sdIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
-      sdIco.setAttribute("width","14");sdIco.setAttribute("height","14");sdIco.setAttribute("viewBox","0 0 16 16");sdIco.setAttribute("fill","none");
-      const sdr1=document.createElementNS("http://www.w3.org/2000/svg","rect");
-      sdr1.setAttribute("x","1.5");sdr1.setAttribute("y","3");sdr1.setAttribute("width","13");sdr1.setAttribute("height","11.5");sdr1.setAttribute("rx","2");sdr1.setAttribute("stroke","currentColor");sdr1.setAttribute("stroke-width","1.5");
-      const sdr2=document.createElementNS("http://www.w3.org/2000/svg","line");
-      sdr2.setAttribute("x1","1.5");sdr2.setAttribute("y1","7");sdr2.setAttribute("x2","14.5");sdr2.setAttribute("y2","7");sdr2.setAttribute("stroke","currentColor");sdr2.setAttribute("stroke-width","1.5");
-      sdIco.append(sdr1,sdr2);
       const sdLabel=document.createTextNode("Date");
-      sheetDateBtn.append(sdIco,sdLabel);
+      sheetDateBtn.append(mkSvg("calendar","14"),sdLabel);
       const sdInput=h("input",{type:"date",style:{position:"absolute",opacity:"0",width:"0",height:"0"},value:""});
       sdInput.setAttribute("min",new Date().toISOString().slice(0,10));
       sdInput.addEventListener("change",e=>{
@@ -1867,15 +1842,7 @@ function R(){
   // Sort toggle — always visible below selection bar
   const sortRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"flex-end",marginBottom:"8px"}});
   const sortBtn=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"3px 8px",fontSize:"11px",fontWeight:"600",color:s._dateSort?"var(--accent)":"var(--muted)",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:"4px"},title:s._dateSort==="asc"?"Tri date ↑":s._dateSort==="desc"?"Tri date ↓":"Tri par date"});
-  const sortIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  sortIco.setAttribute("width","12");sortIco.setAttribute("height","12");sortIco.setAttribute("viewBox","0 0 24 24");sortIco.setAttribute("fill","none");
-  [["M3 6","18"],["M3 12","12"],["M3 18","6"]].forEach(([d,w2])=>{
-    const l=document.createElementNS("http://www.w3.org/2000/svg","line");
-    l.setAttribute("x1","3");l.setAttribute("y1",d.split(" ")[1]);l.setAttribute("x2",String(3+parseInt(w2)));l.setAttribute("y2",d.split(" ")[1]);
-    l.setAttribute("stroke","currentColor");l.setAttribute("stroke-width","2");l.setAttribute("stroke-linecap","round");
-    sortIco.append(l);
-  });
-  sortBtn.append(sortIco,document.createTextNode(s._dateSort==="asc"?" ↑ Date":s._dateSort==="desc"?" ↓ Date":" Date"));
+  sortBtn.append(mkSvg("sort","12"),document.createTextNode(s._dateSort==="asc"?" ↑ Date":s._dateSort==="desc"?" ↓ Date":" Date"));
   sortBtn.addEventListener("click",()=>{
     if(!s._dateSort)s._dateSort="asc";
     else if(s._dateSort==="asc")s._dateSort="desc";
@@ -1899,7 +1866,24 @@ function R(){
   }
   if(dn.length){
     w.append(mkSec("Done","#00C875",dn.length,true,s.doneOpen,()=>{s.doneOpen=!s.doneOpen;R();}));
-    if(s.doneOpen){const cards=h("div",{className:"cards"});dn.forEach(p=>cards.append(mkRow(p)));w.append(cards);}
+    if(s.doneOpen){
+      // Group by day
+      const groups={};
+      dn.forEach(p=>{
+        const day=p.doneAt?p.doneAt.slice(0,10):"Sans date";
+        if(!groups[day])groups[day]=[];
+        groups[day].push(p);
+      });
+      Object.entries(groups).forEach(([day,projects])=>{
+        const dayLabel=day==="Sans date"?"Sans date":shortDt(day);
+        const dayHdr=h("div",{style:{fontSize:"10px",fontWeight:"600",color:"var(--muted)",textTransform:"uppercase",letterSpacing:".04em",padding:"8px 0 2px",marginTop:"4px"}});
+        dayHdr.textContent=dayLabel;
+        w.append(dayHdr);
+        const cards=h("div",{className:"cards"});
+        projects.forEach(p=>cards.append(mkRow(p)));
+        w.append(cards);
+      });
+    }
   }
   if(hid.length){
     const hidSec=h("div",{style:{marginTop:"24px",paddingTop:"12px",borderTop:"1px solid var(--border)"}});
