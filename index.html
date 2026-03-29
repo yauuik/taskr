@@ -1993,7 +1993,7 @@ function R(){
           const {urgent}=parseTask(t.name);
           const taskEl=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",padding:"4px 8px 4px 38px",fontSize:"13px",cursor:"pointer",borderRadius:"6px",transition:"background .12s",color:isDoneT?"var(--muted)":urgent?"var(--red)":"var(--text)",textDecoration:isDoneT?"line-through":"none"}});
           const dotColor=isDoneT?"var(--green)":t.status==="In Progress"||t.status==="progress"?"var(--amber)":"var(--blue)";
-          taskEl.append(h("div",{style:{width:"6px",height:"6px",borderRadius:"50%",background:dotColor,flexShrink:"0"}}));
+          taskEl.append(h("div",{style:{width:"10px",height:"10px",borderRadius:"50%",background:dotColor,flexShrink:"0"}}));
           const cleanName=t.name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim();
           taskEl.append(h("span",{style:{flex:"1",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},cleanName));
           if(t.type==="subtask")taskEl.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",whiteSpace:"nowrap"}},t.parentName.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()));
