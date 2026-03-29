@@ -713,6 +713,7 @@ function getNote(p){
 
 // ─── Sync (Firebase Realtime Database) ───
 const LS_KEY="taskr-data";
+let lastKnownTs=0;// track last known cloud timestamp
 async function sb(p){
   const prefs={
     dateSort:s._dateSort||null,
@@ -721,7 +722,39 @@ async function sb(p){
     calcPauseEnd:settings._calcPauseEnd||null,
     calcDep:settings._calcDep||null
   };
-  await dbRef.set({projects:p,_ts:Date.now(),_prefs:prefs});
+  const now=Date.now();
+  // Transaction: only write if cloud hasn't been updated by another device since we last read
+  const result=await dbRef.transaction(current=>{
+    if(current&&current._ts&&current._ts>lastKnownTs&&lastKnownTs>0){
+      // Cloud is newer than what we knew — don't overwrite
+      return;// abort transaction
+    }
+    return{projects:p,_ts:now,_prefs:prefs};
+  });
+  if(!result.committed){
+    // Transaction aborted — cloud was newer, reload
+    slog("⚠","Conflit détecté — rechargement");
+    const snap=await dbRef.once("value");
+    const data=snap.val();
+    if(data&&data.projects){s.p=data.projects;applyPrefs(data._prefs);lsSave();}
+    lastKnownTs=data?._ts||now;
+    qR();
+    throw new Error("conflict");
+  }
+  lastKnownTs=now;
+  // History backup (keep last 10)
+  const histRef=db.ref("taskr_history");
+  histRef.push({projects:p,_prefs:prefs,_ts:now,_date:new Date().toISOString()});
+  // Trim to 10
+  const histSnap=await histRef.orderByChild("_ts").once("value");
+  const entries=[];
+  histSnap.forEach(c=>{entries.push(c.key);});
+  if(entries.length>10){
+    const toDelete=entries.slice(0,entries.length-10);
+    const updates={};
+    toDelete.forEach(k=>{updates[k]=null;});
+    await histRef.update(updates);
+  }
 }
 function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(s.p));localStorage.setItem(LS_KEY+"_ts",Date.now()+"");}catch{}}
 function lsLoad(){try{const d=localStorage.getItem(LS_KEY);return d?JSON.parse(d):null;}catch{return null;}}
@@ -775,6 +808,7 @@ dbRef.on("value",snap=>{
   if(saving)return;
   const data=snap.val();
   if(!data)return;
+  lastKnownTs=data._ts||0;
   const remote=data.projects||[];
   if(JSON.stringify(remote)!==JSON.stringify(s.p)){
     s.p=remote;
@@ -806,6 +840,7 @@ function up(id,patch,skipRender){
     if(data&&data.projects&&data.projects.length){
       s.p=data.projects;
       applyPrefs(data._prefs);
+      lastKnownTs=data._ts||0;
     } else {
       s.p=DF;
       await sb(DF);
