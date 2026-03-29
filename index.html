@@ -32,8 +32,6 @@ span.flatpickr-weekday{color:var(--sec) !important;font-weight:600 !important;fo
 .flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{color:var(--muted) !important;}
 .numInputWrapper span{display:none !important;}
 [contenteditable]:empty::before{content:attr(data-ph);color:var(--muted);pointer-events:none;}
-</style>
-<style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
   --bg:#F6F7FB;--card:#FFF;--dark:#181B34;
@@ -93,7 +91,7 @@ span.flatpickr-weekday{color:var(--sec) !important;font-weight:600 !important;fo
 [contenteditable] tr:nth-child(even){background:var(--hover);}
 [contenteditable] ul,[contenteditable] ol{padding-left:20px;margin:4px 0;}
 [contenteditable] li{margin:2px 0;}
-[contenteditable] h1,[contenteditable] h2,[contenteditable] h3,[contenteditable] h4,[contenteditable] h5,[contenteditable] h6{font-size:inherit;font-weight:700;margin:8px 0 4px;color:var(--text);}
+[contenteditable] h1,[contenteditable] h2,[contenteditable] h3,[contenteditable] h4,[contenteditable] h5,[contenteditable] h6{font-weight:700;color:var(--text);}
 [contenteditable] label{font-size:inherit;color:inherit;display:inline;}
 [contenteditable] h1{font-size:16px;margin:8px 0 4px;}
 [contenteditable] h2{font-size:15px;margin:6px 0 4px;}
@@ -285,14 +283,7 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const dbRef=db.ref("taskr");
-const DF=[
-  {id:"p1",name:"Template Jira — Quiz Ciblage v2",status:"In Progress",tasks:[{text:"Ajouter les questions MC labels",st:"todo"},{text:"Questions recurring journeys",st:"todo"},{text:"Valider 5 nouvelles questions v2",st:"done"}],notes:[{date:"2025-12",text:"5 questions validées (v2)"},{date:"2025-11",text:"Structure 2 parties"}]},
-  {id:"p2",name:"E-Certificat Auto — Merge mensuel",status:"In Progress",tasks:[{text:"Prochaine vague merge NRB",st:"todo"}],notes:[{date:"2025-12",text:"Script merge Python opérationnel"}]},
-  {id:"p3",name:"Ambassadeur Data 2026",status:"To Do",tasks:[{text:"Planifier news #1",st:"todo"},{text:"Premier atelier",st:"todo"},{text:"Formation data catalogue",st:"todo"},{text:"Formation ODE consumer",st:"todo"}],notes:[{date:"2026-01",text:"7 sous-objectifs"}]},
-  {id:"p4",name:"Loyalty Auto Case 1",status:"In Progress",tasks:[],notes:[{date:"2026-01",text:"Automation 11 activities / 10 steps"}]},
-  {id:"p5",name:"Exploitation Devis — Scripts hebdo",status:"Done",tasks:[{text:"Traitement 1",st:"done"},{text:"Traitement 2",st:"done"}],notes:[{date:"2025-12",text:"Opérationnels"}]},
-  {id:"p6",name:"IBAN Récupération clients",status:"To Do",tasks:[{text:"Coordonner avec V. Pécasse et L. Kluge",st:"todo"}],notes:[{date:"2026-01",text:"~20% clients sans IBAN"}]},
-];
+const DF=[];
 
 // ─── Team (mentions @) ───
 const TEAM=["Larissa","Bryan","Caroline","Aurélie","Fleur","Erwin","Jelle","Maëlysse","Stéphanie","Véronique","Eveline","Laurence","Jeremie","Stanny","Dan","Vincent","Cenk","Alexandre","Antoine","Charlotte"];
@@ -1767,7 +1758,7 @@ function R(){
   // Hover (desktop)
   syncWrap.addEventListener("mouseenter",()=>{tip.style.opacity="1";tip.style.pointerEvents="auto";});
   syncWrap.addEventListener("mouseleave",()=>{tip.style.opacity="0";tip.style.pointerEvents="none";});
-  // Click → open jsonbin dashboard
+  // Click → open Firebase dashboard
   syncDot.addEventListener("click",e=>{e.stopPropagation();
     if(e.altKey||e.ctrlKey||e.metaKey){window.open("https://console.firebase.google.com/project/taskr-1b2bd/database/taskr-1b2bd-default-rtdb/data","_blank");return;}
     slog("↑","Sync manuel…");s.sy="saving";R();
