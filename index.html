@@ -707,7 +707,13 @@ async function lb(){
   return{projects:rec.projects||[],ts:rec._ts||0,prefs:rec._prefs||{}};
 }
 async function sb(p){
-  const prefs={dateSort:s._dateSort||null};
+  const prefs={
+    dateSort:s._dateSort||null,
+    calcArr:settings._calcArr||null,
+    calcPauseStart:settings._calcPauseStart||null,
+    calcPauseEnd:settings._calcPauseEnd||null,
+    calcDep:settings._calcDep||null
+  };
   const r=await fetch(BU,{method:"PUT",headers:HD,body:JSON.stringify({projects:p,_ts:Date.now(),_prefs:prefs})});
   if(!r.ok)throw 0;
 }
@@ -759,7 +765,7 @@ setInterval(async()=>{
     const remote=await lb();
     cloudLoaded=true;
     if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
-      s.p=remote.projects;if(remote.prefs.dateSort!==undefined)s._dateSort=remote.prefs.dateSort;lsSave();slog("↓","Sync cloud");qR();
+      s.p=remote.projects;if(remote.prefs.dateSort!==undefined)s._dateSort=remote.prefs.dateSort;if(remote.prefs.calcArr)settings._calcArr=remote.prefs.calcArr;if(remote.prefs.calcPauseStart)settings._calcPauseStart=remote.prefs.calcPauseStart;if(remote.prefs.calcPauseEnd)settings._calcPauseEnd=remote.prefs.calcPauseEnd;if(remote.prefs.calcDep!==undefined)settings._calcDep=remote.prefs.calcDep;saveSettings(settings);lsSave();slog("↓","Sync cloud");qR();
     }
   }catch{}
   lastPoll=Date.now();
@@ -772,7 +778,7 @@ document.addEventListener("visibilitychange",async()=>{
   try{
     const remote=await lb();
     if(remote.ts>lsTs()&&JSON.stringify(remote.projects)!==JSON.stringify(s.p)){
-      s.p=remote.projects;if(remote.prefs.dateSort!==undefined)s._dateSort=remote.prefs.dateSort;lsSave();slog("↓","Sync retour");qR();
+      s.p=remote.projects;if(remote.prefs.dateSort!==undefined)s._dateSort=remote.prefs.dateSort;if(remote.prefs.calcArr)settings._calcArr=remote.prefs.calcArr;if(remote.prefs.calcPauseStart)settings._calcPauseStart=remote.prefs.calcPauseStart;if(remote.prefs.calcPauseEnd)settings._calcPauseEnd=remote.prefs.calcPauseEnd;if(remote.prefs.calcDep!==undefined)settings._calcDep=remote.prefs.calcDep;saveSettings(settings);lsSave();slog("↓","Sync retour");qR();
     }
   }catch{}
   lastPoll=Date.now();
@@ -793,6 +799,11 @@ function up(id,patch,skipRender){
     const d=await lb();
     s.p=d.projects.length?d.projects:DF;
     if(d.prefs.dateSort!==undefined)s._dateSort=d.prefs.dateSort;
+    if(d.prefs.calcArr)settings._calcArr=d.prefs.calcArr;
+    if(d.prefs.calcPauseStart)settings._calcPauseStart=d.prefs.calcPauseStart;
+    if(d.prefs.calcPauseEnd)settings._calcPauseEnd=d.prefs.calcPauseEnd;
+    if(d.prefs.calcDep!==undefined)settings._calcDep=d.prefs.calcDep;
+    saveSettings(settings);
     if(!d.projects.length)await sb(DF);
     lsSave();cloudLoaded=true;
     s.sy="synced";slog("☁","Chargé ("+s.p.length+" projets)");
