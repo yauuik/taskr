@@ -1157,7 +1157,7 @@ function mkRow(p){
     c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
 
     // Close button top-right
-    const closeBtn=h("button",{style:{position:"absolute",top:"10px",right:"10px",background:"none",border:"none",cursor:"pointer",padding:"4px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"4px",transition:"background .15s"},onClick:e=>{e.stopPropagation();s.ed=null;s.noteEdit=false;R();}});
+    const closeBtn=h("button",{style:{position:"absolute",top:"10px",right:"10px",background:"none",border:"none",cursor:"pointer",padding:"4px",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"4px",transition:"background .15s",zIndex:"5"},onClick:e=>{e.stopPropagation();s.ed=null;s.noteEdit=false;R();}});
     closeBtn.append(mkSvg("close","16",{color:"var(--muted)"}));
     closeBtn.addEventListener("mouseenter",()=>{closeBtn.style.background="var(--hover)";});
     closeBtn.addEventListener("mouseleave",()=>{closeBtn.style.background="none";});
@@ -1166,7 +1166,7 @@ function mkRow(p){
     // Name input — large, clean
     const nameWrap=mentionField({
       value:p.name,
-      style:{fontSize:"16px",fontWeight:"600",background:"transparent",padding:"0 24px 12px 0"},
+      style:{fontSize:"16px",fontWeight:"600",background:"transparent",padding:"0 32px 12px 0",position:"relative",zIndex:"1"},
       onInput:v=>up(p.id,{name:capFirst(v)},true),
       onEnter:()=>{s.ed=null;s.noteEdit=false;R();},
       focusEnd:true
