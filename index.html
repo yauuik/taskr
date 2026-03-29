@@ -324,6 +324,15 @@ const ICONS={
     {t:"line",a:{x1:"3",y1:"6",x2:"21",y2:"6",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}},
     {t:"line",a:{x1:"3",y1:"12",x2:"15",y2:"12",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}},
     {t:"line",a:{x1:"3",y1:"18",x2:"9",y2:"18",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}}
+  ]},
+  trash:{vb:"0 0 24 24",els:[
+    {t:"path",a:{d:"M3 6h18",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}},
+    {t:"path",a:{d:"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round","stroke-linejoin":"round",fill:"none"}},
+    {t:"path",a:{d:"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round","stroke-linejoin":"round",fill:"none"}}
+  ]},
+  close:{vb:"0 0 24 24",els:[
+    {t:"line",a:{x1:"18",y1:"6",x2:"6",y2:"18",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}},
+    {t:"line",a:{x1:"6",y1:"6",x2:"18",y2:"18",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round"}}
   ]}
 };
 function mkSvg(name,size,extra){
@@ -1198,7 +1207,9 @@ function mkRow(p){
         }
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
-        it.append(h("button",{className:"rm",style:{fontSize:"16px",padding:"4px 8px",flexShrink:"0"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}},"×"));
+        const delT=h("button",{className:"rm",style:{padding:"4px 6px",flexShrink:"0",display:"flex",alignItems:"center"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}});
+        delT.append(mkSvg("trash","14",{color:"var(--muted)"}));
+        it.append(delT);
         itd.append(it);
       });
       c.append(itd);
@@ -1485,10 +1496,11 @@ function mkRow(p){
 
     // Footer
     const ft=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:"6px",marginTop:"6px"}});
-    ft.append(
-      h("button",{className:"btn-t",style:{color:"var(--red)",fontSize:"10px",padding:"2px 6px",minHeight:"auto"},onClick:()=>{const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));s.ed=null;toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}},"Supprimer"),
-      h("button",{style:{background:"none",border:"1.5px solid var(--border)",borderRadius:"6px",cursor:"pointer",padding:"4px 12px",fontSize:"11px",fontWeight:"500",color:"var(--sec)",fontFamily:"inherit"},onClick:()=>{s.ed=null;s.noteEdit=false;R();}},"Fermer ✕"),
-    );
+    const delProjBtn=h("button",{className:"btn-t",style:{color:"var(--red)",fontSize:"10px",padding:"2px 6px",minHeight:"auto",display:"flex",alignItems:"center",gap:"4px"},onClick:()=>{const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));s.ed=null;toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}});
+    delProjBtn.append(mkSvg("trash","12",{color:"var(--red)"}),"Supprimer");
+    const closeProjBtn=h("button",{style:{background:"none",border:"1.5px solid var(--border)",borderRadius:"6px",cursor:"pointer",padding:"4px 10px",display:"flex",alignItems:"center",gap:"4px",fontFamily:"inherit"},onClick:()=>{s.ed=null;s.noteEdit=false;R();}});
+    closeProjBtn.append(mkSvg("close","12",{color:"var(--sec)"}),"");
+    ft.append(delProjBtn,closeProjBtn);
     panel.append(ft);
     c.append(panel);
 
@@ -1606,8 +1618,8 @@ function mkRow(p){
     const hBtn=h("span",{style:{fontSize:"14px",color:"var(--muted)",cursor:"pointer",padding:"8px",lineHeight:"1",flexShrink:"0",alignSelf:"center"},onClick:e=>{e.stopPropagation();up(p.id,{hidden:true});}},"×");
     row.append(c,hBtn);
   } else {
-    const delBtn=h("button",{className:"rm",style:{fontSize:"16px",padding:"4px 8px",flexShrink:"0",alignSelf:"flex-start",marginTop:"10px"},onClick:e=>{e.stopPropagation();const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}});
-    delBtn.textContent="×";
+    const delBtn=h("button",{className:"rm",style:{padding:"4px 8px",flexShrink:"0",alignSelf:"flex-start",marginTop:"10px",display:"flex",alignItems:"center"},onClick:e=>{e.stopPropagation();const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}});
+    delBtn.append(mkSvg("trash","14",{color:"var(--muted)"}));
     row.append(c,delBtn);
   }
   return row;
