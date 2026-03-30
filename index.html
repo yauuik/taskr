@@ -1221,13 +1221,39 @@ function mkRow(p){
         }
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
-        const delT=h("button",{className:"rm",style:{padding:"4px 6px",flexShrink:"0",display:"flex",alignItems:"center",borderRadius:"4px",transition:"background .15s"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{children:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}});
+        const delT=h("button",{className:"rm",style:{padding:"4px 6px",flexShrink:"0",display:"flex",alignItems:"center",borderRadius:"4px",transition:"background .15s"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{children:x});toast("Tâche supprimée",()=>{up(p.id,{children:backup});});}});
         const tSvg=mkSvg("trash","16",{color:"var(--muted)",transition:"color .15s"});
         delT.append(tSvg);
         delT.addEventListener("mouseenter",()=>{tSvg.style.color="var(--red)";delT.style.background="rgba(226,68,92,.08)";});
         delT.addEventListener("mouseleave",()=>{tSvg.style.color="var(--muted)";delT.style.background="none";});
         it.append(delT);
+        // Note indicator (small icon if subtask has note)
+        if(getNote(t)&&s._editTask!==p.id+"-"+i){
+          const nIco=h("span",{style:{display:"inline-flex",alignItems:"center",flexShrink:"0",paddingLeft:"2px"}});
+          nIco.append(mkSvg("note","12",{color:"var(--muted)"}));
+          it.insertBefore(nIco,delT);
+        }
         itd.append(it);
+        // Note field when subtask is being edited
+        if(s._editTask===p.id+"-"+i){
+          const noteRow=h("div",{style:{padding:"4px 0 8px 23px"}});
+          const subNote=h("div",{contentEditable:"true",style:{fontSize:"12px",fontFamily:"inherit",lineHeight:"1.5",color:"var(--sec)",outline:"none",padding:"6px 10px",background:"var(--hover)",borderRadius:"6px",minHeight:"28px",maxHeight:"120px",overflowY:"auto",wordBreak:"break-word",border:"1px solid transparent",transition:"border-color .15s"}});
+          const noteVal=getNote(t);
+          if(noteVal){
+            if(noteVal.includes("<")&&noteVal.includes(">"))subNote.innerHTML=noteVal;
+            else subNote.innerHTML=noteVal.replace(/\n/g,"<br>");
+          }
+          subNote.dataset.ph="Note…";
+          subNote.addEventListener("focus",()=>{subNote.style.borderColor="var(--accent)";});
+          subNote.addEventListener("blur",()=>{subNote.style.borderColor="transparent";});
+          subNote.addEventListener("input",()=>{
+            const x=[...ts];x[i]={...x[i],note:subNote.innerHTML};up(p.id,{children:x},true);
+          });
+          subNote.addEventListener("paste",cleanPaste);
+          subNote.addEventListener("mousedown",e=>e.stopPropagation());
+          noteRow.append(subNote);
+          itd.append(noteRow);
+        }
       });
       c.append(itd);
     }
@@ -1651,6 +1677,8 @@ function mkRow(p){
       );
       // Date badge on subtask
       if(t.due&&st!=="done"){const db2=dateBadge(t.due);if(db2){db2.style.flexShrink="0";it.append(db2);}}
+      // Note icon
+      if(getNote(t))it.append(h("span",{style:{display:"inline-flex",alignItems:"center",flexShrink:"0"}},mkSvg("note","11",{color:"var(--muted)"})));
       if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
       itd.append(it);
     });
@@ -1793,6 +1821,7 @@ function R(){
     if(p.due&&p.due.includes(q))return true;
     if(p.due&&shortDt(p.due).toLowerCase().includes(q))return true;
     if(p.children&&p.children.some(t=>t.name&&t.name.toLowerCase().includes(q)))return true;
+    if(p.children&&p.children.some(t=>getNote(t)&&getNote(t).toLowerCase().includes(q)))return true;
     return false;
   }
 
