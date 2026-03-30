@@ -1222,8 +1222,28 @@ function mkRow(p){
           tspan.addEventListener("click",e=>{e.stopPropagation();s._editTask=p.id+"-"+i;R();});
           it.append(tspan);
         }
-        // Date badge on subtask
-        if(t.due&&st!=="done"){const db2=dateBadge(t.due);if(db2){db2.style.flexShrink="0";it.append(db2);}}
+        // Date badge or date picker on subtask
+        if(st!=="done"){
+          const tDateBtn=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",display:"flex",alignItems:"center",flexShrink:"0",borderRadius:"4px",transition:"background .15s",position:"relative"}});
+          if(t.due){
+            const db2=dateBadge(t.due);
+            if(db2){db2.style.fontSize="10px";tDateBtn.append(db2);}
+          } else {
+            tDateBtn.append(mkSvg("calendar","14",{color:"var(--muted)"}));
+          }
+          tDateBtn.addEventListener("mouseenter",()=>{tDateBtn.style.background="var(--hover)";});
+          tDateBtn.addEventListener("mouseleave",()=>{tDateBtn.style.background="none";});
+          // Hidden date input
+          const tDateIn=h("input",{type:"date",value:t.due||"",style:{position:"absolute",opacity:"0",width:"0",height:"0",top:"0",left:"0"}});
+          tDateIn.addEventListener("change",()=>{
+            const x=[...ts];x[i]={...x[i],due:tDateIn.value||undefined};
+            if(!tDateIn.value)delete x[i].due;
+            up(p.id,{tasks:x});
+          });
+          tDateBtn.addEventListener("click",e=>{e.stopPropagation();tDateIn.showPicker?.();});
+          tDateBtn.append(tDateIn);
+          it.append(tDateBtn);
+        }
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
         const delT=h("button",{className:"rm",style:{padding:"4px 6px",flexShrink:"0",display:"flex",alignItems:"center",borderRadius:"4px",transition:"background .15s"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}});
