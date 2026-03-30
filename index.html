@@ -335,7 +335,7 @@ const SETTINGS_KEY="taskr-settings";
 function loadSettings(){try{return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{};}catch{return {};}}
 function saveSettings(v){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(v));}catch{}}
 let settings=loadSettings();
-let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,sett:false,cm:null,cf:null,nk:"",an:"",sel:new Set(),doneOpen:false,sh:false,noteEdit:false,_dateSort:settings._dateSort||null,calView:settings.calView||false};
+let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,sett:false,cm:null,cf:null,nk:"",an:"",sel:new Set(),doneOpen:false,sh:false,noteEdit:false,_dateSort:settings._dateSort||null,calView:settings.calView||false,stOpen:new Set()};
 let svT=null;
 const syncLogs=[];
 function slog(type,msg){
@@ -1640,9 +1640,17 @@ function mkRow(p){
   }
   const meta=h("div",{className:"meta",style:{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}});
   if(ts.length){
+    const stExpanded=s.stOpen.has(p.id);
     const pg=h("div",{className:"prog"});
     pg.append(h("div",{className:"prog-f",style:{width:(dc/ts.length*100)+"%",background:dc===ts.length?"var(--green)":"var(--amber)"}}));
-    meta.append(pg,h("span",{},dc+"/"+ts.length));
+    const chevron=h("span",{style:{fontSize:"10px",color:"var(--muted)",cursor:"pointer",transition:"transform .2s",display:"inline-block",transform:stExpanded?"rotate(90deg)":"rotate(0)",userSelect:"none"}});
+    chevron.textContent="▶";
+    const countBtn=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"4px",cursor:"pointer",padding:"2px 4px",borderRadius:"4px",transition:"background .12s"}});
+    countBtn.append(chevron,pg,h("span",{},dc+"/"+ts.length));
+    countBtn.addEventListener("click",e=>{e.stopPropagation();if(s.stOpen.has(p.id))s.stOpen.delete(p.id);else s.stOpen.add(p.id);R();});
+    countBtn.addEventListener("mouseenter",()=>{countBtn.style.background="var(--hover)";});
+    countBtn.addEventListener("mouseleave",()=>{countBtn.style.background="none";});
+    meta.append(countBtn);
   }
   // Note icon — fixed width slot so date always aligns
   const noteSlot=h("span",{style:{display:"inline-flex",alignItems:"center",width:"14px",flexShrink:"0"}});
@@ -1655,7 +1663,7 @@ function mkRow(p){
   if(db&&!isDone)meta.append(db);
   top.append(meta);c.append(top);
 
-  if(ts.length){
+  if(ts.length&&s.stOpen.has(p.id)){
     const itd=h("div",{className:"itasks"});
     // Sort subtasks by date when date sort is active
     const sortedTs=s._dateSort?[...ts].sort((a,b)=>{
