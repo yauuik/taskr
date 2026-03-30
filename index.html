@@ -2110,8 +2110,8 @@ function R(){
     const cards=h("div",{className:"cards"});td2.forEach(p=>cards.append(mkRow(p)));w.append(cards);
   }
   if(dn.length){
-    w.append(mkSec("Terminé","#00C875",dn.length,true,s.doneOpen,()=>{s.doneOpen=!s.doneOpen;R();}));
-    if(s.doneOpen){
+    w.append(mkSec("Terminé","#00C875",dn.length,true,s.doneOpen||!!s.sq,()=>{s.doneOpen=!s.doneOpen;R();}));
+    if(s.doneOpen||s.sq){
       // Group by day
       const groups={};
       dn.forEach(p=>{
