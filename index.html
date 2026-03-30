@@ -1873,15 +1873,9 @@ function R(){
     sb2.append(mkSvg("search","14",{color:"var(--muted)"}));
     const sIn=h("input",{type:"text",value:s.sq||"",placeholder:"Rechercher partout…",style:{flex:"1",border:"none",outline:"none",fontSize:"14px",fontFamily:"inherit",color:"var(--text)",background:"transparent"}});
     let searchT=null;
-    let prevSq="";
     sIn.addEventListener("input",e=>{
       s.sq=e.target.value;
       if(searchT)clearTimeout(searchT);
-      // Full re-render when search starts or clears (to open/close Done section)
-      const wasEmpty=!prevSq;
-      const isEmpty=!s.sq;
-      prevSq=s.sq;
-      if(wasEmpty!==isEmpty){s._searchFocus=true;R();return;}
       // Instant DOM filter + highlight (no re-render, no cursor jump)
       requestAnimationFrame(()=>{
         const q=s.sq;
@@ -1918,6 +1912,9 @@ function R(){
         });
         const cnt=sb2.querySelector("[data-search-count]");
         if(cnt){const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;cnt.textContent=total+" résultat"+(total!==1?"s":"");}
+        // Show/hide Done section
+        const dw=document.querySelector("[data-done-wrap]");
+        if(dw)dw.style.display=q?"block":s.doneOpen?"block":"none";
       });
     });
     sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s._searchClosing=true;s.search=false;s.sq="";R();setTimeout(()=>{s._searchClosing=false;},100);}});
@@ -2117,7 +2114,10 @@ function R(){
   }
   if(dn.length){
     w.append(mkSec("Terminé","#00C875",dn.length,true,s.doneOpen||!!s.sq,()=>{s.doneOpen=!s.doneOpen;R();}));
-    if(s.doneOpen||s.sq){
+    // Always render done content (for search), hide if not open
+    const doneWrap=h("div",{style:{display:s.doneOpen||s.sq?"block":"none"}});
+    doneWrap.setAttribute("data-done-wrap","1");
+    {
       // Group by day
       const groups={};
       dn.forEach(p=>{
@@ -2129,12 +2129,13 @@ function R(){
         const dayLabel=day==="Sans date"?"Sans date":shortDt(day);
         const dayHdr=h("div",{style:{fontSize:"10px",fontWeight:"600",color:"var(--muted)",textTransform:"uppercase",letterSpacing:".04em",padding:"8px 0 2px",marginTop:"4px"}});
         dayHdr.textContent=dayLabel;
-        w.append(dayHdr);
+        doneWrap.append(dayHdr);
         const cards=h("div",{className:"cards"});
         projects.forEach(p=>cards.append(mkRow(p)));
-        w.append(cards);
+        doneWrap.append(cards);
       });
     }
+    w.append(doneWrap);
   }
   if(hid.length){
     const hidSec=h("div",{style:{marginTop:"24px",paddingTop:"12px",borderTop:"1px solid var(--border)"}});
