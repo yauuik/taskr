@@ -1874,18 +1874,43 @@ function R(){
     sIn.addEventListener("input",e=>{
       s.sq=e.target.value;
       if(searchT)clearTimeout(searchT);
-      // Instant DOM filter (no re-render, no keyboard flash)
+      // Instant DOM filter + highlight (no re-render, no cursor jump)
       requestAnimationFrame(()=>{
+        const q=s.sq;
         document.querySelectorAll("[data-id]").forEach(row=>{
           const id=row.getAttribute("data-id");
           const p=s.p.find(x=>x.id===id);
-          if(p)row.style.display=matchSearch(p)?"":"none";
+          if(!p)return;
+          const vis=matchSearch(p);
+          row.style.display=vis?"":"none";
+          // Remove old highlights and excerpts
+          row.querySelectorAll("mark.hl").forEach(m=>{const t=document.createTextNode(m.textContent);m.parentNode.replaceChild(t,m);});
+          row.querySelectorAll("[data-note-exc]").forEach(e=>e.remove());
+          if(!vis||!q)return;
+          // Highlight in name and subtasks
+          row.querySelectorAll(".crd-name, .it span").forEach(el=>hlText(el,q));
+          // Note excerpt
+          const note=getNote(p);
+          if(note){
+            const exc=noteExcerpt(note,q);
+            if(exc){
+              const crd=row.querySelector(".crd");
+              if(crd){
+                const excDiv=h("div",{style:{fontSize:"12px",color:"var(--sec)",padding:"4px 0 2px 28px",lineHeight:"1.4",display:"flex",alignItems:"flex-start",gap:"4px"}});
+                excDiv.setAttribute("data-note-exc","1");
+                excDiv.append(mkSvg("note","12",{color:"var(--muted)",marginTop:"1px",flexShrink:"0"}));
+                const excSpan=h("span",{style:{fontStyle:"italic"}});
+                excSpan.textContent=exc;
+                hlText(excSpan,q);
+                excDiv.append(excSpan);
+                crd.append(excDiv);
+              }
+            }
+          }
         });
         const cnt=sb2.querySelector("[data-search-count]");
         if(cnt){const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;cnt.textContent=total+" résultat"+(total!==1?"s":"");}
       });
-      // Debounced full re-render for highlights (200ms)
-      searchT=setTimeout(()=>{s._searchFocus=true;R();},200);
     });
     sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s._searchClosing=true;s.search=false;s.sq="";R();setTimeout(()=>{s._searchClosing=false;},100);}});
     sb2.append(sIn);
