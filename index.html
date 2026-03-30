@@ -1915,6 +1915,11 @@ function R(){
         // Show/hide Done section
         const dw=document.querySelector("[data-done-wrap]");
         if(dw)dw.style.display=q?"block":s.doneOpen?"block":"none";
+        // Hide done day groups with no visible rows
+        document.querySelectorAll("[data-done-group]").forEach(g=>{
+          const hasVisible=[...g.querySelectorAll("[data-id]")].some(r=>r.style.display!=="none");
+          g.style.display=q&&!hasVisible?"none":"";
+        });
       });
     });
     sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s._searchClosing=true;s.search=false;s.sq="";R();setTimeout(()=>{s._searchClosing=false;},100);}});
@@ -2126,13 +2131,16 @@ function R(){
         groups[day].push(p);
       });
       Object.entries(groups).forEach(([day,projects])=>{
+        const dayGroup=h("div",{});
+        dayGroup.setAttribute("data-done-group","1");
         const dayLabel=day==="Sans date"?"Sans date":shortDt(day);
         const dayHdr=h("div",{style:{fontSize:"10px",fontWeight:"600",color:"var(--muted)",textTransform:"uppercase",letterSpacing:".04em",padding:"8px 0 2px",marginTop:"4px"}});
         dayHdr.textContent=dayLabel;
-        doneWrap.append(dayHdr);
+        dayGroup.append(dayHdr);
         const cards=h("div",{className:"cards"});
         projects.forEach(p=>cards.append(mkRow(p)));
-        doneWrap.append(cards);
+        dayGroup.append(cards);
+        doneWrap.append(dayGroup);
       });
     }
     w.append(doneWrap);
