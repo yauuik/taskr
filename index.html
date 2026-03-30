@@ -90,6 +90,7 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .sec-count{font-size:13px;color:var(--muted);font-weight:500;}
 .sec-toggle{background:none;border:none;cursor:pointer;color:var(--sec);font-size:13px;transition:transform .2s;padding:2px 4px;}
 .sec-toggle.open{transform:rotate(90deg);}
+.hl{background:#FDEF6C;color:var(--text);border-radius:2px;padding:0 1px;}
 .sec-line{flex:1;height:1px;background:var(--border);}
 
 .cards{display:flex;flex-direction:column;gap:1px;}
@@ -545,6 +546,43 @@ function richText(txt,style){
     if(li<lines.length-1)sp.append(document.createElement("br"));
   });
   return sp;
+}
+
+// ─── Search highlight: wraps matched text in <mark class="hl"> ───
+function hlText(el,query){
+  if(!query||!el)return;
+  const q=query.toLowerCase();
+  const walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  const nodes=[];
+  while(walk.nextNode())nodes.push(walk.currentNode);
+  nodes.forEach(n=>{
+    const txt=n.textContent;
+    const idx=txt.toLowerCase().indexOf(q);
+    if(idx<0)return;
+    const before=txt.slice(0,idx);
+    const match=txt.slice(idx,idx+query.length);
+    const after=txt.slice(idx+query.length);
+    const frag=document.createDocumentFragment();
+    if(before)frag.append(document.createTextNode(before));
+    const mark=document.createElement("mark");
+    mark.className="hl";mark.textContent=match;
+    frag.append(mark);
+    if(after)frag.append(document.createTextNode(after));
+    n.parentNode.replaceChild(frag,n);
+  });
+}
+function noteExcerpt(noteHtml,query){
+  if(!noteHtml||!query)return null;
+  // Strip HTML tags to get plain text
+  const tmp=document.createElement("div");tmp.innerHTML=noteHtml;
+  const plain=tmp.textContent||tmp.innerText||"";
+  const q=query.toLowerCase();
+  const idx=plain.toLowerCase().indexOf(q);
+  if(idx<0)return null;
+  const start=Math.max(0,idx-30);
+  const end=Math.min(plain.length,idx+query.length+40);
+  let excerpt=(start>0?"…":"")+plain.slice(start,end)+(end<plain.length?"…":"");
+  return excerpt;
 }
 
 // ─── Mention system: input + tag bar ───
@@ -1568,6 +1606,7 @@ function mkRow(p){
   } else {
     const nameEl=richTask(p.name,{});
     nameEl.className="crd-name"+(isDone?" x":"");
+    if(s.sq)hlText(nameEl,s.sq);
     top.append(nameEl);
   }
   const meta=h("div",{className:"meta",style:{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}});
@@ -1595,6 +1634,7 @@ function mkRow(p){
       const it=h("div",{className:"it"+(urgent?" urgent":"")});
       const tspan2=richTask(t.text,{flex:"1"});
       if(st==="done")tspan2.classList.add("x");
+      if(s.sq)hlText(tspan2,s.sq);
       it.append(
         h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i,e.altKey);}},bxsTxt(st)),
         tspan2
@@ -1603,6 +1643,19 @@ function mkRow(p){
       itd.append(it);
     });
     c.append(itd);
+  }
+  // Note excerpt when search matches note
+  if(s.sq&&getNote(p)){
+    const exc=noteExcerpt(getNote(p),s.sq);
+    if(exc){
+      const excDiv=h("div",{style:{fontSize:"12px",color:"var(--sec)",padding:"4px 0 2px 28px",lineHeight:"1.4",display:"flex",alignItems:"flex-start",gap:"4px"}});
+      excDiv.append(mkSvg("note","12",{color:"var(--muted)",marginTop:"1px",flexShrink:"0"}));
+      const excSpan=h("span",{style:{fontStyle:"italic"}});
+      excSpan.textContent=exc;
+      hlText(excSpan,s.sq);
+      excDiv.append(excSpan);
+      c.append(excDiv);
+    }
   }
   if(isDone){
     const hBtn=h("span",{style:{fontSize:"14px",color:"var(--muted)",cursor:"pointer",padding:"8px",lineHeight:"1",flexShrink:"0",alignSelf:"center"},onClick:e=>{e.stopPropagation();up(p.id,{hidden:true});}},"×");
