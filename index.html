@@ -1873,9 +1873,15 @@ function R(){
     sb2.append(mkSvg("search","14",{color:"var(--muted)"}));
     const sIn=h("input",{type:"text",value:s.sq||"",placeholder:"Rechercher partout…",style:{flex:"1",border:"none",outline:"none",fontSize:"14px",fontFamily:"inherit",color:"var(--text)",background:"transparent"}});
     let searchT=null;
+    let prevSq="";
     sIn.addEventListener("input",e=>{
       s.sq=e.target.value;
       if(searchT)clearTimeout(searchT);
+      // Full re-render when search starts or clears (to open/close Done section)
+      const wasEmpty=!prevSq;
+      const isEmpty=!s.sq;
+      prevSq=s.sq;
+      if(wasEmpty!==isEmpty){s._searchFocus=true;R();return;}
       // Instant DOM filter + highlight (no re-render, no cursor jump)
       requestAnimationFrame(()=>{
         const q=s.sq;
