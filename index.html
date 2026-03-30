@@ -1194,7 +1194,12 @@ function mkRow(p){
     if(ts.length){
       c.append(h("div",{style:{fontSize:"10px",fontWeight:"700",color:"var(--muted)",textTransform:"uppercase",letterSpacing:".06em",padding:"12px 0 4px"}},"Sous-tâches"));
       const itd=h("div",{className:"itasks",style:{marginLeft:"0",borderLeft:"2px solid var(--border)",paddingLeft:"12px"}});
-      ts.forEach((t,i)=>{
+      const sortedTs2=s._dateSort?[...ts].sort((a,b)=>{
+        const da=a.due||"9999";const db2=b.due||"9999";
+        return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);
+      }):ts;
+      sortedTs2.forEach((t)=>{
+        const i=ts.indexOf(t);
         const st=tSt(t);
         const {urgent}=parseTask(t.text);
         const it=h("div",{className:"it"+(urgent?" urgent":"")});
@@ -1217,6 +1222,8 @@ function mkRow(p){
           tspan.addEventListener("click",e=>{e.stopPropagation();s._editTask=p.id+"-"+i;R();});
           it.append(tspan);
         }
+        // Date badge on subtask
+        if(t.due&&st!=="done"){const db2=dateBadge(t.due);if(db2){db2.style.flexShrink="0";it.append(db2);}}
         if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
         // Delete button per task
         const delT=h("button",{className:"rm",style:{padding:"4px 6px",flexShrink:"0",display:"flex",alignItems:"center",borderRadius:"4px",transition:"background .15s"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{tasks:x});toast("Tâche supprimée",()=>{up(p.id,{tasks:backup});});}});
@@ -1630,7 +1637,13 @@ function mkRow(p){
 
   if(ts.length){
     const itd=h("div",{className:"itasks"});
-    ts.forEach((t,i)=>{
+    // Sort subtasks by date when date sort is active
+    const sortedTs=s._dateSort?[...ts].sort((a,b)=>{
+      const da=a.due||"9999";const db2=b.due||"9999";
+      return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);
+    }):ts;
+    sortedTs.forEach((t,i)=>{
+      const origIdx=ts.indexOf(t);
       const st=tSt(t);
       const {urgent}=parseTask(t.text);
       const it=h("div",{className:"it"+(urgent?" urgent":"")});
@@ -1638,9 +1651,11 @@ function mkRow(p){
       if(st==="done")tspan2.classList.add("x");
       if(s.sq)hlText(tspan2,s.sq);
       it.append(
-        h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i,e.altKey);}},bxsTxt(st)),
+        h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,origIdx,e.altKey);}},bxsTxt(st)),
         tspan2
       );
+      // Date badge on subtask
+      if(t.due&&st!=="done"){const db2=dateBadge(t.due);if(db2){db2.style.flexShrink="0";it.append(db2);}}
       if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
       itd.append(it);
     });
