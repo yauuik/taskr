@@ -1874,7 +1874,7 @@ function R(){
     sIn.addEventListener("input",e=>{
       s.sq=e.target.value;
       if(searchT)clearTimeout(searchT);
-      // Defer DOM filter to next frame (don't interfere with cursor)
+      // Instant DOM filter (no re-render, no keyboard flash)
       requestAnimationFrame(()=>{
         document.querySelectorAll("[data-id]").forEach(row=>{
           const id=row.getAttribute("data-id");
@@ -1884,9 +1884,9 @@ function R(){
         const cnt=sb2.querySelector("[data-search-count]");
         if(cnt){const total=s.p.filter(p=>!p.hidden&&matchSearch(p)).length;cnt.textContent=total+" résultat"+(total!==1?"s":"");}
       });
-      // Full re-render only on blur
+      // Debounced full re-render for highlights (200ms)
+      searchT=setTimeout(()=>{s._searchFocus=true;R();},200);
     });
-    sIn.addEventListener("blur",()=>{setTimeout(()=>{if(s.search&&!s._searchClosing)R();},300);});
     sIn.addEventListener("keydown",e=>{if(e.key==="Escape"){s._searchClosing=true;s.search=false;s.sq="";R();setTimeout(()=>{s._searchClosing=false;},100);}});
     sb2.append(sIn);
     if(s._searchFocus){s._searchFocus=false;requestAnimationFrame(()=>sIn.focus());}
