@@ -1709,8 +1709,8 @@ function mkRow(p){
     row.removeAttribute("data-id");
     wrap.append(row);
     const stExp=s.stOpen.has(p.id);
-    const togLine=h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"0 0 4px 44px",cursor:"pointer",fontSize:"11px",color:"var(--muted)",userSelect:"none"}});
-    const arrow=h("span",{style:{display:"inline-block",transition:"transform .2s",transform:stExp?"rotate(90deg)":"rotate(0)",fontSize:"8px"}});
+    const togLine=h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"0 0 4px 58px",cursor:"pointer",fontSize:"11px",color:"var(--muted)",userSelect:"none"}});
+    const arrow=h("span",{style:{display:"inline-block",transition:"transform .2s",transform:stExp?"rotate(90deg)":"rotate(0)",fontSize:"11px"}});
     arrow.textContent="▶";
     togLine.append(arrow,h("span",{},ts.length+" sous-tâche"+(ts.length>1?"s":"")));
     togLine.addEventListener("click",e=>{
