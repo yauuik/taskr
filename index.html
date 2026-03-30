@@ -1608,12 +1608,12 @@ function mkRow(p){
   c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
   if(!isDone){
     c.addEventListener("click",e=>{
-      if(e.target.closest("a")||e.target.closest(".bx-s")||e.target.closest(".rm")||e.target.closest(".mention")||e.target.closest("[data-st-toggle]"))return;
+      if(e.target.closest("a")||e.target.closest(".bx-s")||e.target.closest(".rm")||e.target.closest(".mention"))return;
       e.stopPropagation();s.ed=p.id;s.nk="";s.noteEdit=false;s.qed=null;R();
     });
   } else {
     c.addEventListener("click",e=>{
-      if(e.target.closest("a")||e.target.closest(".bx-s")||e.target.closest(".rm")||e.target.closest(".mention")||e.target.closest("[data-st-toggle]"))return;
+      if(e.target.closest("a")||e.target.closest(".bx-s")||e.target.closest(".rm")||e.target.closest(".mention"))return;
       e.stopPropagation();toast("Repasse-la en cours pour l'éditer");
     });
   }
@@ -1640,18 +1640,9 @@ function mkRow(p){
   }
   const meta=h("div",{className:"meta",style:{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}});
   if(ts.length){
-    const stExpanded=s.stOpen.has(p.id);
     const pg=h("div",{className:"prog"});
     pg.append(h("div",{className:"prog-f",style:{width:(dc/ts.length*100)+"%",background:dc===ts.length?"var(--green)":"var(--amber)"}}));
-    const chevron=h("span",{style:{fontSize:"10px",color:"var(--muted)",cursor:"pointer",transition:"transform .2s",display:"inline-block",transform:stExpanded?"rotate(90deg)":"rotate(0)",userSelect:"none"}});
-    chevron.textContent="▶";
-    const countBtn=h("span",{style:{display:"inline-flex",alignItems:"center",gap:"4px",cursor:"pointer",padding:"2px 4px",borderRadius:"4px",transition:"background .12s"}});
-    countBtn.setAttribute("data-st-toggle","1");
-    countBtn.append(chevron,pg,h("span",{},dc+"/"+ts.length));
-    countBtn.addEventListener("click",e=>{e.stopPropagation();if(s.stOpen.has(p.id))s.stOpen.delete(p.id);else s.stOpen.add(p.id);R();});
-    countBtn.addEventListener("mouseenter",()=>{countBtn.style.background="var(--hover)";});
-    countBtn.addEventListener("mouseleave",()=>{countBtn.style.background="none";});
-    meta.append(countBtn);
+    meta.append(pg,h("span",{},dc+"/"+ts.length));
   }
   // Note icon — fixed width slot so date always aligns
   const noteSlot=h("span",{style:{display:"inline-flex",alignItems:"center",width:"14px",flexShrink:"0"}});
@@ -1664,7 +1655,24 @@ function mkRow(p){
   if(db&&!isDone)meta.append(db);
   top.append(meta);c.append(top);
 
-  if(ts.length&&s.stOpen.has(p.id)){
+  // Subtask toggle line (separate from card click)
+  if(ts.length&&!isOpen){
+    const stExp=s.stOpen.has(p.id);
+    const togLine=h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"2px 0 2px 44px",cursor:"pointer",fontSize:"11px",color:"var(--muted)",userSelect:"none"}});
+    const arrow=h("span",{style:{display:"inline-block",transition:"transform .2s",transform:stExp?"rotate(90deg)":"rotate(0)",fontSize:"8px"}});
+    arrow.textContent="▶";
+    togLine.append(arrow,h("span",{},ts.length+" sous-tâche"+(ts.length>1?"s":"")));
+    togLine.addEventListener("click",e=>{
+      e.stopPropagation();
+      if(s.stOpen.has(p.id))s.stOpen.delete(p.id);else s.stOpen.add(p.id);
+      R();
+    });
+    togLine.addEventListener("mouseenter",()=>{togLine.style.color="var(--sec)";});
+    togLine.addEventListener("mouseleave",()=>{togLine.style.color="var(--muted)";});
+    c.append(togLine);
+  }
+
+  if(ts.length&&s.stOpen.has(p.id)&&!isOpen){
     const itd=h("div",{className:"itasks"});
     // Sort subtasks by date when date sort is active
     const sortedTs=s._dateSort?[...ts].sort((a,b)=>{
