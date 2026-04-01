@@ -1641,7 +1641,7 @@ function mkAddForm(opts){
   inputWrap.append(mentionField({
     value:s.an,placeholder:"Nom de la tâche…",
     style:{fontSize:fs2,fontWeight:"500"},
-    onInput:v=>{s.an=v;},
+    onInput:v=>{s.an=v;if(addBtn){addBtn.style.background=v.trim()?"var(--accent)":"var(--muted)";addBtn.style.opacity=v.trim()?"1":".5";addBtn.style.cursor=v.trim()?"pointer":"default";}},
     onEnter:()=>{if(s.an.trim()){
       const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:""};
       if(formDate)n.due=formDate;
@@ -1668,14 +1668,16 @@ function mkAddForm(opts){
   dateBtn.addEventListener("click",e=>{e.stopPropagation();dateIn.showPicker?.();dateIn.click();});
   foot.append(dateBtn,h("div",{style:{flex:"1"}}));
   foot.append(
-    h("button",{style:{padding:bPad,borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:bFs,fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";if(opts.onDone)opts.onDone();else R();}},"Annuler"),
-    h("button",{style:{padding:bPad,borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:bFs,fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim()){
+    h("button",{style:{padding:bPad,borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:bFs,fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";if(opts.onDone)opts.onDone();else R();}},"Annuler")
+  );
+  const addBtn=h("button",{style:{padding:bPad,borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:bFs,fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim()){
       const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:""};
       if(formDate)n.due=formDate;
       s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
       if(opts.onDone)opts.onDone();
-    }}},"Ajouter")
-  );
+    }}});
+  addBtn.textContent="Ajouter";
+  foot.append(addBtn);
   wrap.append(foot);
   return wrap;
 }
