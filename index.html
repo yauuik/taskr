@@ -438,8 +438,9 @@ function dateBadge(dateStr,inherited){
   const now=new Date();now.setHours(0,0,0,0);
   const diff=Math.floor((dt-now)/(1000*60*60*24));
   let color="var(--sec)",bg="var(--hover)";
-  if(diff<0){color="#fff";bg="var(--red)";} // overdue
-  else if(diff===0){color="#fff";bg="var(--red)";} // today
+  const hc=settings.contrastDates!==false;
+  if(diff<0){color=hc?"#fff":"var(--red)";bg=hc?"var(--red)":"rgba(226,68,92,.1)";} // overdue
+  else if(diff===0){color=hc?"#fff":"var(--red)";bg=hc?"var(--red)":"rgba(226,68,92,.1)";} // today
   else if(diff===1){color="var(--red)";bg="rgba(226,68,92,.1)";} // tomorrow
   else if(diff<=3){color="#e67e22";bg="rgba(230,126,34,.1)";} // 2-3 days
   else if(diff<=7){color="var(--amber)";bg="rgba(253,171,61,.12)";} // this week
@@ -2440,6 +2441,7 @@ function rSett(){
   fpRow.append(fpToggle);
   m.append(fpRow);
   m.append(toggleRow("Icône mention","Petit icône personne dans les tags","mentionIcon",true));
+  m.append(toggleRow("Dates contrastées","Aujourd'hui et retard en blanc sur fond coloré","contrastDates",true));
 
   // Theme selector
   const thRow=h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid var(--border)"}});
