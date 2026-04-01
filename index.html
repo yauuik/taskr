@@ -419,7 +419,20 @@ function capFirst(s){
 }
 function shortDt(d){if(!d)return"";const dt=new Date(d);const m=["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"];return dt.getDate()+" "+m[dt.getMonth()];}
 // Date badge with smart coloring
-function dateBadge(dateStr){
+// Effective date: own date, or earliest child date if none
+function effectiveDate(p){
+  if(p.due)return p.due;
+  const ch=p.children||[];
+  if(!ch.length)return null;
+  let earliest=null;
+  for(const c of ch){
+    if(c.due&&tSt(c)!=="done"){
+      if(!earliest||c.due<earliest)earliest=c.due;
+    }
+  }
+  return earliest;
+}
+function dateBadge(dateStr,inherited){
   if(!dateStr)return null;
   const dt=new Date(dateStr+"T00:00:00");
   const now=new Date();now.setHours(0,0,0,0);
@@ -432,18 +445,19 @@ function dateBadge(dateStr){
   else if(diff<=7){color="var(--amber)";bg="rgba(253,171,61,.1)";} // this week
   const label=diff===0?"Aujourd'hui":diff===-1?"Hier":diff===1?"Demain":shortDt(dateStr);
   const ico=mkSvg("calendar","11");
-  const badge=h("span",{style:{fontSize:"10px",fontWeight:"600",color,background:bg,padding:"2px 7px",borderRadius:"8px",whiteSpace:"nowrap",lineHeight:"1.4",display:"inline-flex",alignItems:"center",gap:"3px"}});
+  const badge=h("span",{style:{fontSize:"10px",fontWeight:"600",color,background:bg,padding:"2px 7px",borderRadius:"8px",whiteSpace:"nowrap",lineHeight:"1.4",display:"inline-flex",alignItems:"center",gap:"3px",fontStyle:inherited?"italic":"normal",opacity:inherited?".7":"1"}});
   badge.append(ico,document.createTextNode(label));
   return badge;
 }
 // Check if project is urgent (!! in name OR due today/overdue)
 function isUrgent(p){
   if(p.name&&p.name.includes("!!"))return true;
-  if(p.due){
-    const dt=new Date(p.due+"T00:00:00");
+  const d=effectiveDate(p);
+  if(d){
+    const dt=new Date(d+"T00:00:00");
     const now=new Date();now.setHours(0,0,0,0);
     const diff=Math.floor((dt-now)/(1000*60*60*24));
-    if(diff<=1)return true;// today, overdue, or tomorrow
+    if(diff<=1)return true;
   }
   return false;
 }
@@ -1564,7 +1578,8 @@ function mkRow(p,depth){
   }
   meta.append(noteSlot);
   if(isDone&&p.doneAt)meta.append(h("span",{style:{color:"var(--green)",fontSize:"10px",fontFamily:"monospace"}},"✓ "+shortDt(p.doneAt)));
-  const db=dateBadge(p.due);
+  const effDt=effectiveDate(p);
+  const db=dateBadge(effDt,!!(!p.due&&effDt));
   if(db&&!isDone)meta.append(db);
   top.append(meta);c.append(top);
 
@@ -1730,8 +1745,8 @@ function R(){
 
   // Date sort: asc/desc/off
   function dateSort(a,b){
-    const da=a.due||"9999";
-    const db2x=b.due||"9999";
+    const da=effectiveDate(a)||"9999";
+    const db2x=effectiveDate(b)||"9999";
     if(s._dateSort==="asc")return da.localeCompare(db2x);
     return db2x.localeCompare(da);
   }
@@ -2015,7 +2030,8 @@ function R(){
     const allTasks=[];
     s.p.forEach(p=>{
       if(p.hidden||p.status==="Done")return;
-      if(p.due)allTasks.push({name:p.name,due:p.due,status:p.status,id:p.id,type:"project"});
+      const eff=effectiveDate(p);
+      if(eff)allTasks.push({name:p.name,due:eff,status:p.status,id:p.id,type:"project"});
       (p.children||[]).forEach((t,i)=>{
         if(t.due&&tSt(t)!=="done")allTasks.push({name:t.name,due:t.due,status:tSt(t),id:p.id,idx:i,type:"subtask",parentName:p.name});
       });
