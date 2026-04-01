@@ -1519,7 +1519,10 @@ function mkRow(p,depth){
   if(!isDone){
     c.addEventListener("click",e=>{
       if(e.target.closest("a")||e.target.closest(".bx")||e.target.closest(".rm")||e.target.closest(".mention"))return;
-      e.stopPropagation();s.ed=p.id;s.nk="";s.noteEdit=false;s.qed=null;R();
+      e.stopPropagation();
+      // If this is a child, ensure parent's toggle stays open
+      if(depth>0){const pid=findParentId(p.id,s.p,null);if(pid)s.stOpen.add(pid);}
+      s.ed=p.id;s.nk="";s.noteEdit=false;s.qed=null;R();
     });
   } else {
     c.addEventListener("click",e=>{
