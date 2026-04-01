@@ -1156,8 +1156,8 @@ function mkRow(p,depth){
     if(db3&&!isDone)meta.append(db3);
     if(meta.childNodes.length)c.append(meta);
 
-    // Children rendered as full rows (recursive, same as parent)
-    if(ts.length){
+    // Children rendered as full rows (only for top-level)
+    if(ts.length&&depth===0){
       c.append(h("div",{style:{fontSize:"10px",fontWeight:"700",color:"var(--muted)",textTransform:"uppercase",letterSpacing:".06em",padding:"12px 0 4px"}},"Sous-tâches"));
       const childWrap=h("div",{style:{borderLeft:"2px solid var(--border)",paddingLeft:"8px",marginLeft:"4px"}});
       const sortedCh=s._dateSort?[...ts].sort((a,b)=>{const da=a.due||"9999";const db2=b.due||"9999";return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);}):ts;
@@ -1198,7 +1198,8 @@ function mkRow(p,depth){
     }
     panel.append(dateRow);
 
-    // Add task input
+    // Add task input (only for top-level)
+    if(depth===0){
     const tir=h("div",{style:{display:"flex",gap:"6px",marginBottom:"4px",position:"relative",zIndex:"60",overflow:"visible"}});
     tir.append(mentionField({
       value:s.nk,
@@ -1210,6 +1211,7 @@ function mkRow(p,depth){
     }));
     if(s._focusTaskInput)s._focusTaskInput=false;
     panel.append(tir);
+    }
 
     // Notes
     // Notes — always editable when project is open, with mini toolbar
