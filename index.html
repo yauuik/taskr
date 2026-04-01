@@ -2475,7 +2475,7 @@ function rCalc(){
   function updateResult(){
     pause=calcPause();
     resultTime.textContent=calcEnd(arrival,pause);
-    settings._calcArr=arrival;settings._calcPauseStart=pauseStart;settings._calcPauseEnd=pauseEnd;settings._calcDep=departure;saveSettings(settings);
+    settings._calcArr=arrival;settings._calcPauseStart=pauseStart;settings._calcPauseEnd=pauseEnd;settings._calcDep=departure;saveSettings(settings);save();
     updatePauseInfo();
     // Overtime
     const ot=calcOvertime();
