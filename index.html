@@ -112,9 +112,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .bx{width:20px;height:20px;border-radius:4px;border:2px solid var(--muted);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .15s;cursor:pointer;color:transparent;user-select:none;}
 .bx.dn{border-color:var(--green);background:var(--green);color:#fff;animation:checkPop .3s ease;}
 .bx.ip{border-color:var(--amber);color:var(--amber);background:var(--card);}
-.bx-s{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--muted);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .15s;cursor:pointer;color:transparent;flex-shrink:0;user-select:none;margin-top:1px;}
-.bx-s.ip{border-color:var(--amber);color:var(--amber);background:var(--card);}
-.bx-s.dn{border-color:var(--green);background:var(--green);color:#fff;animation:checkPop .3s ease;}
 
 .crd{flex:1;min-width:0;overflow:hidden;padding:10px 14px;border-radius:8px;cursor:pointer;transition:background .12s;}
 .crd.crd-open{overflow:visible !important;cursor:default;}
@@ -130,11 +127,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .prog{width:36px;height:3px;border-radius:2px;background:var(--border);overflow:hidden;}
 .prog-f{height:100%;border-radius:2px;transition:width .3s;}
 
-.itasks{margin-top:6px;display:flex;flex-direction:column;margin-left:28px;}
-.it{display:flex;align-items:flex-start;gap:6px;padding:8px 0;font-size:13px;color:var(--text);min-height:32px;}
-.it span.x{color:var(--muted);text-decoration:line-through;}
-.it span.x .mention{color:var(--muted);background:rgba(103,104,121,.05);text-decoration:line-through;}
-.it span{word-break:break-word;min-width:0;}
 
 .ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.22);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;padding:0;}
 .mod{background:var(--card);border-radius:16px 16px 0 0;padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0));width:100%;max-width:500px;max-height:95vh;overflow-y:auto;box-shadow:0 -8px 48px rgba(0,0,0,.12);}
@@ -163,7 +155,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .empty{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
 .mention{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:10px;background:rgba(103,104,121,.08);color:var(--sec);font-size:inherit;font-weight:600;white-space:nowrap;line-height:1.4;}
 .it.urgent{background:rgba(226,68,92,.05);border-radius:4px;margin:0 -4px;padding-left:4px;padding-right:4px;color:var(--red);}
-.it.urgent .bx-s{border-color:var(--red);}
 .it.urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
 .row-urgent{background:rgba(226,68,92,.04) !important;border-radius:8px;}
 .row-urgent .crd-name{color:var(--red) !important;}
@@ -206,7 +197,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
   /* Checkbox — keep square style */
   .chk{width:40px;min-height:44px;padding-top:2px;}
   .bx{width:22px;height:22px;}
-  .bx-s{width:18px;height:18px;}
 
   /* Card content */
   .crd{padding:0 4px 0 0;border-radius:0 !important;}
@@ -217,8 +207,6 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
   .meta{width:100%;order:1;margin-top:4px;font-size:12px;gap:8px;}
 
   /* Subtasks */
-  .itasks{margin-left:22px;margin-top:6px;}
-  .it{padding:8px 0;font-size:14px;min-height:36px;}
 
   /* Grip */
   .grip{opacity:1;min-height:48px;width:28px;font-size:18px;touch-action:none;-webkit-touch-callout:none;user-select:none;}
@@ -811,9 +799,41 @@ dbRef.on("value",snap=>{
 // ps: replace all projects + save + render
 function ps(p){s.p=p;slog("↑","Sauvegarde…");save();qR();}
 
-// up: update single project — skipRender to avoid re-render on text input
+// ─── Tree helpers ───
+function findInTree(id,nodes){
+  for(const n of nodes){
+    if(n.id===id)return n;
+    if(n.children){const f=findInTree(id,n.children);if(f)return f;}
+  }
+  return null;
+}
+function findParentId(id,nodes,parentId){
+  for(const n of nodes){
+    if(n.id===id)return parentId;
+    if(n.children){const f=findParentId(id,n.children,n.id);if(f)return f;}
+  }
+  return null;
+}
+function updateInTree(id,patch,nodes){
+  return nodes.map(n=>{
+    if(n.id===id)return{...n,...patch};
+    if(n.children)return{...n,children:updateInTree(id,patch,n.children)};
+    return n;
+  });
+}
+function removeFromTree(id,nodes){
+  return nodes.filter(n=>n.id!==id).map(n=>n.children?{...n,children:removeFromTree(id,n.children)}:n);
+}
+
+// up: update any task in tree — finds by id recursively
 function up(id,patch,skipRender){
-  s.p=s.p.map(p=>p.id===id?{...p,...patch}:p);
+  // Check if top-level
+  if(s.p.some(p=>p.id===id)){
+    s.p=s.p.map(p=>p.id===id?{...p,...patch}:p);
+  } else {
+    // Nested — find root project and update tree
+    s.p=s.p.map(p=>({...p,children:updateInTree(id,patch,p.children||[])}));
+  }
   save();
   if(!skipRender) qR();
 }
@@ -849,8 +869,7 @@ const PREV={"In Progress":"To Do","Done":"In Progress","To Do":"Done"};
 const TNEXT={"todo":"progress","progress":"done","done":"todo"};
 const TPREV={"progress":"todo","done":"progress","todo":"done"};
 const UNDO_MS=2000;
-const lastTogP={};
-const lastTogT={};
+const lastTog={};
 
 // ─── Haptic + Sound feedback ───
 function haptic(){try{navigator.vibrate&&navigator.vibrate(15);}catch{}}
@@ -869,90 +888,63 @@ function playCheck(){
   }catch{}
 }
 
-function togP(id,reverse){
-  const p=s.p.find(x=>x.id===id);if(!p)return;
+// Unified toggle — works for any task in tree
+function tog(id,reverse){
+  const t=findInTree(id,s.p);if(!t)return;
   const now=Date.now();
+  const curSt=t.status||"To Do";
   // Quick re-click → undo
-  if(lastTogP[id]&&(now-lastTogP[id].t)<UNDO_MS){
-    const prev=lastTogP[id].st;
+  if(lastTog[id]&&(now-lastTog[id].t)<UNDO_MS){
+    const prev=lastTog[id].st;
     const patch={status:prev};
-    if(prev==="Done"){patch.doneAt=td();patch.children=(p.children||[]).map(t=>({...t,status:"Done",doneAt:t.doneAt||td()}));}
-    else{patch.doneAt=null;patch.children=(p.children||[]).map(t=>{const o={...t,status:"To Do"};delete o.doneAt;return o;});}
-    delete lastTogP[id];
+    if(prev==="Done"){patch.doneAt=td();if(t.children?.length)patch.children=t.children.map(c=>({...c,status:"Done",doneAt:c.doneAt||td()}));}
+    else{patch.doneAt=null;if(t.children?.length)patch.children=t.children.map(c=>{const o={...c,status:"To Do"};delete o.doneAt;return o;});}
+    delete lastTog[id];
     up(id,patch);return;
   }
-  const next=reverse?(PREV[p.status]||"Done"):(NEXT[p.status]||"To Do");
-  lastTogP[id]={t:now,st:p.status};
-  setTimeout(()=>{if(lastTogP[id]&&(Date.now()-lastTogP[id].t)>=UNDO_MS)delete lastTogP[id];},UNDO_MS+50);
+  const next=reverse?(PREV[curSt]||"Done"):(NEXT[curSt]||"To Do");
+  lastTog[id]={t:now,st:curSt};
+  setTimeout(()=>{if(lastTog[id]&&(Date.now()-lastTog[id].t)>=UNDO_MS)delete lastTog[id];},UNDO_MS+50);
   const patch={status:next};
   const nowD=td();
-  if(next==="Done"){patch.doneAt=nowD;patch.children=(p.children||[]).map(t=>({...t,status:"Done",doneAt:t.doneAt||nowD}));}
-  if(next==="To Do"){delete patch.doneAt;patch.children=(p.children||[]).map(t=>{const o={...t,status:"To Do"};delete o.doneAt;return o;});}
-  // Animate before moving to Done
+  if(next==="Done"){patch.doneAt=nowD;if(t.children?.length)patch.children=t.children.map(c=>({...c,status:"Done",doneAt:c.doneAt||nowD}));}
+  if(next==="To Do"){delete patch.doneAt;if(t.children?.length)patch.children=t.children.map(c=>{const o={...c,status:"To Do"};delete o.doneAt;return o;});}
+  // Parent logic: if child starts working, set parent to In Progress
+  const parentId=findParentId(id,s.p,null);
+  if(parentId){
+    const parent=findInTree(parentId,s.p);
+    if(parent&&curSt==="To Do"&&parent.status==="To Do")up(parentId,{status:"In Progress"},true);
+    if(parent&&curSt==="Done"&&next!=="Done"&&parent.status==="Done")up(parentId,{status:"In Progress",doneAt:null},true);
+  }
+  // Animate Done transition
   if(next==="Done"){
     haptic();playCheck();
-    up(id,patch,true);// save but don't render yet
+    up(id,patch,true);
     const row=document.querySelector('[data-id="'+id+'"]');
     if(row){
       row.classList.add("done-anim");
-      // Animate checkbox to done state
       const bx=row.querySelector(".bx");
       if(bx){bx.classList.remove("ip");bx.classList.add("dn");bx.textContent="✓";}
-      setTimeout(()=>qR(),1500);
-    }
-    else qR();
-  } else up(id,patch);
-}
-
-function togT(pid,i,reverse){
-  const p=s.p.find(x=>x.id===pid);if(!p)return;
-  const t=(p.children||[])[i];if(!t)return;
-  const now=Date.now();
-  const tk=pid+"-"+i;
-  const STATUS_MAP={"done":"Done","progress":"In Progress","todo":"To Do"};
-  // Quick re-click → undo
-  if(lastTogT[tk]&&(now-lastTogT[tk].t)<UNDO_MS){
-    const ts=[...(p.children||[])];
-    const prev=lastTogT[tk].st;
-    const nt={...t,status:STATUS_MAP[prev]||"To Do"};
-    if(prev==="done")nt.doneAt=td();else delete nt.doneAt;
-    ts[i]=nt;
-    delete lastTogT[tk];
-    up(pid,{children:ts});return;
-  }
-  lastTogT[tk]={t:now,st:tSt(t)};
-  setTimeout(()=>{if(lastTogT[tk]&&(Date.now()-lastTogT[tk].t)>=UNDO_MS)delete lastTogT[tk];},UNDO_MS+50);
-  const ts=[...(p.children||[])];
-  const nst=reverse?(TPREV[tSt(t)]||"done"):(TNEXT[tSt(t)]||"todo");
-  const nt={...t,status:STATUS_MAP[nst]||"To Do"};
-  if(nst==="done") nt.doneAt=td();
-  else delete nt.doneAt;
-  ts[i]=nt;
-  const patch={children:ts};
-  if(tSt(t)==="todo"&&p.status==="To Do") patch.status="In Progress";
-  if(tSt(t)==="done"&&nst!=="done"&&p.status==="Done"){patch.status="In Progress";patch.doneAt=null;}
-  up(pid,patch,true);
-  const cur=s.p.find(x=>x.id===pid);
-  const allDone=cur&&cur.children&&cur.children.length&&cur.children.every(t2=>tSt(t2)==="done")&&cur.status!=="Done";
-  if(nst==="done"){
-    haptic();playCheck();
-    // Animate subtask strikethrough then render
-    const rows=document.querySelectorAll('[data-id="'+pid+'"] .it');
-    if(rows[i]){
-      // Animate checkbox
-      const bx=rows[i].querySelector(".bx-s");
-      if(bx){bx.classList.remove("ip");bx.classList.add("dn");bx.textContent="✓";}
-      const sp=rows[i].querySelector("span");
-      if(sp){sp.style.textDecoration="line-through";sp.style.color="var(--muted)";sp.style.transition="color .3s";}
-      rows[i].style.opacity=".4";rows[i].style.transition="opacity .5s ease .2s";
-    }
-    setTimeout(()=>{
-      if(allDone)up(pid,{status:"Done",doneAt:td()});
-      else R();
-    },1500);
+      setTimeout(()=>{
+        // Check if all siblings done → parent to Done
+        if(parentId){
+          const parent=findInTree(parentId,s.p);
+          if(parent&&parent.children?.length&&parent.children.every(c=>c.status==="Done")&&parent.status!=="Done"){
+            up(parentId,{status:"Done",doneAt:td()});
+          }
+        }
+        qR();
+      },1500);
+    } else qR();
   } else {
-    if(allDone)up(pid,{status:"Done",doneAt:td()});
-    else R();
+    up(id,patch);
+    // Check if all siblings done → parent to Done
+    if(parentId){
+      const parent=findInTree(parentId,s.p);
+      if(parent&&parent.children?.length&&parent.children.every(c=>(c.id===id?next:c.status)==="Done")&&parent.status!=="Done"){
+        up(parentId,{status:"Done",doneAt:td()});
+      }
+    }
   }
 }
 
@@ -962,7 +954,7 @@ function qadd(){
   s._newId=n.id;ps([n,...s.p]);
   s.an="";s.nk="";
 }
-function atk(){if(!s.nk.trim()||!s.ed)return;const p=s.p.find(x=>x.id===s.ed);up(s.ed,{children:[...(p.children||[]),{id:gid(),name:capFirst(s.nk.trim()),status:"To Do",note:"",children:[]}]});s.nk="";s._focusTaskInput=true;}
+function atk(){if(!s.nk.trim()||!s.ed)return;const t=findInTree(s.ed,s.p);if(!t)return;up(s.ed,{children:[...(t.children||[]),{id:gid(),name:capFirst(s.nk.trim()),status:"To Do",note:"",children:[]}]});s.nk="";s._focusTaskInput=true;}
 function cfm(m,f){s.cm=m;s.cf=f;R();}
 function xcfm(){s.cm=null;s.cf=null;R();}
 
@@ -1015,18 +1007,9 @@ function bxTxt(st){
   }
   return "";
 }
-function bxsTxt(st){
-  if(st==="done")return "✓";
-  if(st==="progress"){
-    const bar=document.createElement("span");
-    bar.style.cssText="display:block;width:7px;height:1.5px;background:var(--amber);border-radius:1px;";
-    return bar;
-  }
-  return "";
-}
-function bxsCls(st){return st==="done"?"bx-s dn":st==="progress"?"bx-s ip":"bx-s";}
 
-function mkRow(p){
+function mkRow(p,depth){
+  depth=depth||0;
   const ts=p.children||[];
   const dc=ts.filter(t=>tSt(t)==="done").length;
   const pSt=p.status==="Done"?"done":p.status==="In Progress"?"progress":"todo";
@@ -1034,6 +1017,7 @@ function mkRow(p){
   const isTodo=p.status==="To Do";
   const isOpen=s.ed===p.id;
   const row=h("div",{className:"row"});
+  if(depth>0)row.style.marginLeft=(depth*24)+"px";
   if(s._newId===p.id){row.style.animation="slideIn .25s ease";s._newId=null;}
   row.setAttribute("data-id",p.id);
 
@@ -1047,13 +1031,13 @@ function mkRow(p){
       const dy=Math.abs(e.changedTouches[0].clientY-swY);
       swX=null;
       if(dy>30||Math.abs(dx)<60)return;// vertical scroll or too short
-      if(dx>60)togP(p.id,false);// swipe right = advance
-      else if(dx<-60)togP(p.id,true);// swipe left = go back
+      if(dx>60)tog(p.id,false);// swipe right = advance
+      else if(dx<-60)tog(p.id,true);// swipe left = go back
     },{passive:true});
   }
 
   // Drag & Drop — To Do only, collapsed only — custom mouse/touch
-  if(isTodo&&!isOpen){
+  if(isTodo&&!isOpen&&depth===0){
     row.style.cursor="grab";
     let pendingDrag=null;
     const startDrag=(startY)=>{
@@ -1078,7 +1062,7 @@ function mkRow(p){
     // Desktop: drag from anywhere on the row (click vs drag threshold)
     row.addEventListener("mousedown",e=>{
       if(e.button!==0)return;
-      if(e.target.closest(".chk,.bx,.bx-s,.rm,.btn-t"))return;
+      if(e.target.closest(".chk,.bx,.rm,.btn-t"))return;
       e.preventDefault();
       const startY=e.clientY;const startX=e.clientX;
       pendingDrag={startY,startX,started:false};
@@ -1128,7 +1112,7 @@ function mkRow(p){
   }
 
   // Checkbox
-  row.append(h("div",{className:"chk",onClick:e=>{e.stopPropagation();togP(p.id,e.altKey);}},
+  row.append(h("div",{className:"chk",onClick:e=>{e.stopPropagation();tog(p.id,e.altKey);}},
     h("div",{className:bxCls(pSt)},bxTxt(pSt))));
 
   // ═══ EXPANDED STATE ═══
@@ -1165,97 +1149,13 @@ function mkRow(p){
     if(db3&&!isDone)meta.append(db3);
     if(meta.childNodes.length)c.append(meta);
 
-    // Subtasks section
+    // Children rendered as full rows (recursive, same as parent)
     if(ts.length){
       c.append(h("div",{style:{fontSize:"10px",fontWeight:"700",color:"var(--muted)",textTransform:"uppercase",letterSpacing:".06em",padding:"12px 0 4px"}},"Sous-tâches"));
-      const itd=h("div",{className:"itasks",style:{marginLeft:"0",borderLeft:"2px solid var(--border)",paddingLeft:"12px"}});
-      const sortedTs2=s._dateSort?[...ts].sort((a,b)=>{
-        const da=a.due||"9999";const db2=b.due||"9999";
-        return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);
-      }):ts;
-      sortedTs2.forEach((t)=>{
-        const i=ts.indexOf(t);
-        const st=tSt(t);
-        const {urgent}=parseTask(t.name);
-        const it=h("div",{className:"it"+(urgent?" urgent":"")});
-        it.append(
-          h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,i,e.altKey);}},bxsTxt(st))
-        );
-        // Editable subtask text
-        if(s._editTask===p.id+"-"+i){
-          const tiWrap=mentionField({
-            value:t.name,
-            style:{fontSize:"13px",background:"transparent",padding:"2px 0",flex:"1"},
-            onInput:v=>{const x=[...ts];x[i]={...x[i],name:capFirst(v)};up(p.id,{children:x},true);},
-            onEnter:()=>{s._editTask=null;R();},
-            focusEnd:true
-          });
-          it.append(tiWrap);
-        } else {
-          const tspan=richTask(t.name,{flex:"1",cursor:"text"});
-          if(st==="done")tspan.classList.add("x");
-          tspan.addEventListener("click",e=>{e.stopPropagation();s._editTask=p.id+"-"+i;R();});
-          it.append(tspan);
-        }
-        // Date badge or date picker on subtask
-        if(st!=="done"){
-          const tDateBtn=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",display:"flex",alignItems:"center",flexShrink:"0",borderRadius:"4px",transition:"background .15s",position:"relative"}});
-          if(t.due){
-            const db2=dateBadge(t.due);
-            if(db2){db2.style.fontSize="10px";tDateBtn.append(db2);}
-          } else {
-            tDateBtn.append(mkSvg("calendar","14",{color:"var(--muted)"}));
-          }
-          tDateBtn.addEventListener("mouseenter",()=>{tDateBtn.style.background="var(--hover)";});
-          tDateBtn.addEventListener("mouseleave",()=>{tDateBtn.style.background="none";});
-          // Hidden date input
-          const tDateIn=h("input",{type:"date",value:t.due||"",style:{position:"absolute",opacity:"0",width:"0",height:"0",top:"0",left:"0"}});
-          tDateIn.addEventListener("change",()=>{
-            const x=[...ts];x[i]={...x[i],due:tDateIn.value||undefined};
-            if(!tDateIn.value)delete x[i].due;
-            up(p.id,{children:x});
-          });
-          tDateBtn.addEventListener("click",e=>{e.stopPropagation();tDateIn.showPicker?.();});
-          tDateBtn.append(tDateIn);
-          it.append(tDateBtn);
-        }
-        if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
-        // Delete button per task
-        const delT=h("button",{className:"rm",style:{padding:"4px 6px",flexShrink:"0",display:"flex",alignItems:"center",borderRadius:"4px",transition:"background .15s"},onClick:e=>{e.stopPropagation();const backup=[...ts];const x=[...ts];x.splice(i,1);up(p.id,{children:x});toast("Tâche supprimée",()=>{up(p.id,{children:backup});});}});
-        const tSvg=mkSvg("trash","16",{color:"var(--muted)",transition:"color .15s"});
-        delT.append(tSvg);
-        delT.addEventListener("mouseenter",()=>{tSvg.style.color="var(--red)";delT.style.background="rgba(226,68,92,.08)";});
-        delT.addEventListener("mouseleave",()=>{tSvg.style.color="var(--muted)";delT.style.background="none";});
-        it.append(delT);
-        // Note indicator (small icon if subtask has note)
-        if(getNote(t)&&s._editTask!==p.id+"-"+i){
-          const nIco=h("span",{style:{display:"inline-flex",alignItems:"center",flexShrink:"0",paddingLeft:"2px"}});
-          nIco.append(mkSvg("note","12",{color:"var(--muted)"}));
-          it.insertBefore(nIco,delT);
-        }
-        itd.append(it);
-        // Note field when subtask is being edited
-        if(s._editTask===p.id+"-"+i){
-          const noteRow=h("div",{style:{padding:"4px 0 8px 23px"}});
-          const subNote=h("div",{contentEditable:"true",style:{fontSize:"12px",fontFamily:"inherit",lineHeight:"1.5",color:"var(--sec)",outline:"none",padding:"6px 10px",background:"var(--hover)",borderRadius:"6px",minHeight:"28px",maxHeight:"120px",overflowY:"auto",wordBreak:"break-word",border:"1px solid transparent",transition:"border-color .15s"}});
-          const noteVal=getNote(t);
-          if(noteVal){
-            if(noteVal.includes("<")&&noteVal.includes(">"))subNote.innerHTML=noteVal;
-            else subNote.innerHTML=noteVal.replace(/\n/g,"<br>");
-          }
-          subNote.dataset.ph="Note…";
-          subNote.addEventListener("focus",()=>{subNote.style.borderColor="var(--accent)";});
-          subNote.addEventListener("blur",()=>{subNote.style.borderColor="transparent";});
-          subNote.addEventListener("input",()=>{
-            const x=[...ts];x[i]={...x[i],note:subNote.innerHTML};up(p.id,{children:x},true);
-          });
-          subNote.addEventListener("paste",cleanPaste);
-          subNote.addEventListener("mousedown",e=>e.stopPropagation());
-          noteRow.append(subNote);
-          itd.append(noteRow);
-        }
-      });
-      c.append(itd);
+      const childWrap=h("div",{style:{borderLeft:"2px solid var(--border)",paddingLeft:"8px",marginLeft:"4px"}});
+      const sortedCh=s._dateSort?[...ts].sort((a,b)=>{const da=a.due||"9999";const db2=b.due||"9999";return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);}):ts;
+      sortedCh.forEach(child=>childWrap.append(mkRow(child,1)));
+      c.append(childWrap);
     }
 
     // ─── Edit panel below ───
@@ -1609,12 +1509,12 @@ function mkRow(p){
   c.oncontextmenu=e=>{e.preventDefault();s.sel.has(p.id)?s.sel.delete(p.id):s.sel.add(p.id);R();};
   if(!isDone){
     c.addEventListener("click",e=>{
-      if(e.target.closest("a")||e.target.closest(".bx-s")||e.target.closest(".rm")||e.target.closest(".mention"))return;
+      if(e.target.closest("a")||e.target.closest(".bx")||e.target.closest(".rm")||e.target.closest(".mention"))return;
       e.stopPropagation();s.ed=p.id;s.nk="";s.noteEdit=false;s.qed=null;R();
     });
   } else {
     c.addEventListener("click",e=>{
-      if(e.target.closest("a")||e.target.closest(".bx-s")||e.target.closest(".rm")||e.target.closest(".mention"))return;
+      if(e.target.closest("a")||e.target.closest(".bx")||e.target.closest(".rm")||e.target.closest(".mention"))return;
       e.stopPropagation();toast("Repasse-la en cours pour l'éditer");
     });
   }
@@ -1656,34 +1556,6 @@ function mkRow(p){
   if(db&&!isDone)meta.append(db);
   top.append(meta);c.append(top);
 
-  if(ts.length&&s.stOpen.has(p.id)&&!isOpen){
-    const itd=h("div",{className:"itasks"});
-    // Sort subtasks by date when date sort is active
-    const sortedTs=s._dateSort?[...ts].sort((a,b)=>{
-      const da=a.due||"9999";const db2=b.due||"9999";
-      return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);
-    }):ts;
-    sortedTs.forEach((t,i)=>{
-      const origIdx=ts.indexOf(t);
-      const st=tSt(t);
-      const {urgent}=parseTask(t.name);
-      const it=h("div",{className:"it"+(urgent?" urgent":"")});
-      const tspan2=richTask(t.name,{flex:"1"});
-      if(st==="done")tspan2.classList.add("x");
-      if(s.sq)hlText(tspan2,s.sq);
-      it.append(
-        h("div",{className:bxsCls(st),onClick:e=>{e.stopPropagation();togT(p.id,origIdx,e.altKey);}},bxsTxt(st)),
-        tspan2
-      );
-      // Date badge on subtask
-      if(t.due&&st!=="done"){const db2=dateBadge(t.due);if(db2){db2.style.flexShrink="0";it.append(db2);}}
-      // Note icon
-      if(getNote(t))it.append(h("span",{style:{display:"inline-flex",alignItems:"center",flexShrink:"0"}},mkSvg("note","11",{color:"var(--muted)"})));
-      if(st==="done"&&t.doneAt)it.append(h("span",{style:{fontSize:"10px",color:"var(--muted)",fontFamily:"monospace",whiteSpace:"nowrap",paddingLeft:"6px"}},shortDt(t.doneAt)));
-      itd.append(it);
-    });
-    c.append(itd);
-  }
   // Note excerpt when search matches note
   if(s.sq&&getNote(p)){
     const exc=noteExcerpt(getNote(p),s.sq);
@@ -1697,33 +1569,50 @@ function mkRow(p){
       c.append(excDiv);
     }
   }
-  if(isDone){
+  if(isDone&&depth===0){
     const hBtn=h("span",{style:{fontSize:"14px",color:"var(--muted)",cursor:"pointer",padding:"8px",lineHeight:"1",flexShrink:"0",alignSelf:"center"},onClick:e=>{e.stopPropagation();up(p.id,{hidden:true});}},"×");
     row.append(c,hBtn);
   } else {
-    const delBtn=h("button",{className:"rm",style:{padding:"4px 8px",flexShrink:"0",alignSelf:"flex-start",marginTop:"10px",display:"flex",alignItems:"center"},onClick:e=>{e.stopPropagation();const backup=[...s.p];const name=p.name;ps(s.p.filter(x=>x.id!==p.id));toast("\""+name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" supprimé",()=>{ps(backup);});}});
+    const delBtn=h("button",{className:"rm",style:{padding:"4px 8px",flexShrink:"0",alignSelf:"flex-start",marginTop:"10px",display:"flex",alignItems:"center"},onClick:e=>{
+      e.stopPropagation();
+      if(depth===0){
+        cfm("Supprimer \""+p.name.replace(/@[\w\u00C0-\u024F]+\s*/g,"").replace(/!!/g,"").trim()+"\" ?",()=>{const backup=[...s.p];ps(s.p.filter(x=>x.id!==p.id));toast("Supprimé",()=>{ps(backup);});});
+      } else {
+        // Remove child from parent
+        const parentId=findParentId(p.id,s.p,null);
+        if(parentId){
+          const parent=findInTree(parentId,s.p);
+          const backup=[...(parent.children||[])];
+          up(parentId,{children:(parent.children||[]).filter(c=>c.id!==p.id)});
+          toast("Supprimé",()=>{up(parentId,{children:backup});});
+        }
+      }
+    }});
     delBtn.append(mkSvg("trash","16",{color:"var(--muted)"}));
     row.append(c,delBtn);
   }
-  // Subtask toggle — outside card, wrapped with row
+  // Children — recursive, same rendering
   if(ts.length&&!isOpen){
     const wrap=h("div",{});
     wrap.setAttribute("data-id",p.id);
     row.removeAttribute("data-id");
     wrap.append(row);
+    // Toggle line
     const stExp=s.stOpen.has(p.id);
-    const togLine=h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"0 0 4px 68px",cursor:"pointer",fontSize:"11px",color:"var(--muted)",userSelect:"none"}});
+    const indent=depth===0?68:68+(depth*24);
+    const togLine=h("div",{style:{display:"flex",alignItems:"center",gap:"6px",padding:"0 0 2px "+indent+"px",cursor:"pointer",fontSize:"11px",color:"var(--muted)",userSelect:"none"}});
     const arrow=h("span",{style:{display:"inline-block",transition:"transform .2s",transform:stExp?"rotate(90deg)":"rotate(0)",fontSize:"11px"}});
     arrow.textContent="▶";
     togLine.append(arrow,h("span",{},ts.length+" sous-tâche"+(ts.length>1?"s":"")));
-    togLine.addEventListener("click",e=>{
-      e.stopPropagation();
-      if(s.stOpen.has(p.id))s.stOpen.delete(p.id);else s.stOpen.add(p.id);
-      R();
-    });
+    togLine.addEventListener("click",e=>{e.stopPropagation();if(s.stOpen.has(p.id))s.stOpen.delete(p.id);else s.stOpen.add(p.id);R();});
     togLine.addEventListener("mouseenter",()=>{togLine.style.color="var(--sec)";});
     togLine.addEventListener("mouseleave",()=>{togLine.style.color="var(--muted)";});
     wrap.append(togLine);
+    // Render children recursively when expanded
+    if(stExp){
+      const sortedCh=s._dateSort?[...ts].sort((a,b)=>{const da=a.due||"9999";const db2=b.due||"9999";return s._dateSort==="asc"?da.localeCompare(db2):db2.localeCompare(da);}):ts;
+      sortedCh.forEach(child=>wrap.append(mkRow(child,depth+1)));
+    }
     return wrap;
   }
   return row;
@@ -1950,7 +1839,7 @@ function R(){
           row.querySelectorAll("[data-note-exc]").forEach(e=>e.remove());
           if(!vis||!q)return;
           // Highlight in name and subtasks
-          row.querySelectorAll(".crd-name, .it span").forEach(el=>hlText(el,q));
+          row.querySelectorAll(".crd-name").forEach(el=>hlText(el,q));
           // Note excerpt
           const note=getNote(p);
           if(note){
