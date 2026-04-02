@@ -2015,8 +2015,23 @@ function R(){
   // Selection bar
   if(s.sel.size){
     const sb2=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px",padding:"8px 14px",background:"#FFF0F2",borderRadius:"8px",fontSize:"12px"}});
+    // Date button with hidden input
+    const dateSelBtn=h("button",{style:{fontSize:"11px",padding:"4px 12px",borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--sec)",cursor:"pointer",fontFamily:"inherit",fontWeight:"600",display:"inline-flex",alignItems:"center",gap:"4px",position:"relative"}});
+    dateSelBtn.append(mkSvg("calendar","12"),"Date");
+    const dateSelIn=h("input",{type:"date",style:{position:"absolute",opacity:"0",width:"0",height:"0",top:"0",left:"0"}});
+    dateSelIn.setAttribute("min",localIso());
+    dateSelIn.addEventListener("change",()=>{
+      const d=dateSelIn.value;if(!d)return;
+      const n=s.sel.size;
+      s.sel.forEach(id=>up(id,{due:d},true));
+      s.sel.clear();qR();
+      toast(n+" tâche"+(n>1?"s":"")+" → "+shortDt(d));
+    });
+    dateSelBtn.addEventListener("click",e=>{e.stopPropagation();dateSelIn.showPicker?.();});
+    dateSelBtn.append(dateSelIn);
     sb2.append(
       h("span",{style:{flex:"1",color:"var(--sec)"}},s.sel.size+" sélect."),
+      dateSelBtn,
       h("button",{className:"btn btn-r",style:{fontSize:"11px",padding:"4px 12px"},onClick:()=>{const backup=[...s.p];const n=s.sel.size;ps(s.p.filter(p=>!s.sel.has(p.id)));s.sel.clear();toast(n+" projet(s) supprimé(s)",()=>{ps(backup);});}},"Supprimer"),
       h("button",{className:"btn-t",onClick:()=>{s.sel.clear();R();}},"Annuler")
     );w.append(sb2);
