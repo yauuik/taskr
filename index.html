@@ -154,6 +154,8 @@ body{font-family:'Figtree',system-ui,sans-serif;background:var(--bg);color:var(-
 .btn-t:hover{color:var(--sec);}
 .empty{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
 .mention{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:10px;background:rgba(103,104,121,.08);color:var(--sec);font-size:inherit;font-weight:600;white-space:nowrap;line-height:1.4;}
+.fpath{display:inline;padding:2px 6px;border-radius:6px;background:rgba(97,97,255,.06);color:var(--accent);font-size:inherit;cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px;transition:background .15s;word-break:break-all;}
+.fpath:hover{background:rgba(97,97,255,.12);}
 .it.urgent{background:rgba(226,68,92,.05);border-radius:4px;margin:0 -4px;padding-left:4px;padding-right:4px;color:var(--red);}
 .it.urgent .mention{color:var(--red) !important;background:rgba(226,68,92,.1) !important;}
 .row-urgent{background:rgba(226,68,92,.04) !important;border-radius:8px;}
@@ -879,6 +881,11 @@ function up(id,patch,skipRender){
     setTimeout(()=>toast("Sync erreur: "+(err?.message||err||"unknown"),null,8000),500);
   }
   s.ok=true;R();document.addEventListener("keydown",onK);
+  // Click-to-copy for file paths in notes
+  document.addEventListener("click",e=>{
+    const fp=e.target.closest(".fpath");
+    if(fp){e.preventDefault();e.stopPropagation();const path=fp.dataset.path;if(path){navigator.clipboard.writeText(path).then(()=>toast("Chemin copié : "+path)).catch(()=>toast("Erreur copie"));}}
+  });
 })();
 
 // ─── Cycle: To Do → In Progress → Done → To Do ───
@@ -1431,23 +1438,38 @@ function mkRow(p,depth){
     // Auto-linkify plain URLs in text nodes
     function linkifyNote(el){
       const urlRe=/(https?:\/\/[^\s<]+)/g;
+      const pathRe=/([A-Z]:\\[^\s<]+(?:\s[^\s<\\]+)*|\\\\[^\s<]+(?:\s[^\s<\\]+)*)/g;
       const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
       const nodes=[];
       while(walker.nextNode())nodes.push(walker.currentNode);
       nodes.forEach(node=>{
-        if(node.parentElement.tagName==="A")return;
+        if(node.parentElement.tagName==="A"||node.parentElement.classList.contains("fpath"))return;
         const txt=node.textContent;
-        if(!urlRe.test(txt))return;
-        urlRe.lastIndex=0;
+        // Combined regex: URLs + file paths
+        const combined=new RegExp('(https?:\\/\\/[^\\s<]+)|([A-Z]:\\\\[^\\n<]+?)(?=\\s*$|\\s*<)|' + '(\\\\\\\\[^\\n<]+?)(?=\\s*$|\\s*<)','g');
+        let hasMatch=false;
+        for(const m of txt.matchAll(combined)){hasMatch=true;break;}
+        if(!hasMatch)return;
         const frag=document.createDocumentFragment();
         let last=0;
-        for(const m of txt.matchAll(urlRe)){
+        for(const m of txt.matchAll(combined)){
           if(m.index>last)frag.append(document.createTextNode(txt.slice(last,m.index)));
-          const a=document.createElement("a");
-          a.href=m[0];a.textContent=m[0];a.target="_blank";a.rel="noopener";
-          a.style.color="var(--accent)";a.style.textDecoration="underline";
-          frag.append(a);
-          last=m.index+m[0].length;
+          if(m[1]){
+            // URL
+            const a=document.createElement("a");
+            a.href=m[1];a.textContent=m[1];a.target="_blank";a.rel="noopener";
+            a.style.color="var(--accent)";a.style.textDecoration="underline";
+            frag.append(a);
+            last=m.index+m[1].length;
+          } else {
+            // File path
+            const path=(m[2]||m[3]).replace(/\s+$/,"");
+            const span=document.createElement("span");
+            span.className="fpath";span.dataset.path=path;
+            span.textContent="📁 "+path;
+            frag.append(span);
+            last=m.index+path.length;
+          }
         }
         if(last<txt.length)frag.append(document.createTextNode(txt.slice(last)));
         node.parentNode.replaceChild(frag,node);
