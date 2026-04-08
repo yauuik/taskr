@@ -1820,8 +1820,11 @@ function R(){
   tb.append(h("h1",{},h("span",{},"Task"),h("span",{style:{color:"var(--amber)"}},"."),h("span",{style:{color:"var(--blue)"}},"r")));
   const acts=h("div",{style:{display:"flex",gap:"4px",alignItems:"center"}});
   // Bookmark: Plan Marketing Jira
-  const bmPlan=h("a",{href:"https://ethias.atlassian.net/jira/plans/3845/scenarios/3862/timeline",target:"_blank",rel:"noopener",title:"Plan Marketing (Jira)",style:{display:"inline-flex",alignItems:"center",gap:"5px",padding:"4px 10px",borderRadius:"6px",background:"var(--hover)",color:"var(--sec)",fontSize:"11px",fontWeight:"600",textDecoration:"none",fontFamily:"inherit",marginRight:"8px",borderRight:"1px solid var(--border)",paddingRight:"14px",transition:"all .15s"}});
-  bmPlan.textContent="📋 Plan Marketing";
+  const bmPlan=h("a",{href:"https://ethias.atlassian.net/jira/plans/3845/scenarios/3862/timeline",target:"_blank",rel:"noopener",title:"Plan Marketing (Jira)",style:{display:"inline-flex",alignItems:"center",gap:"6px",padding:"4px 10px",borderRadius:"6px",background:"var(--hover)",color:"var(--sec)",fontSize:"11px",fontWeight:"600",textDecoration:"none",fontFamily:"inherit",marginRight:"8px",borderRight:"1px solid var(--border)",paddingRight:"14px",transition:"all .15s"}});
+  const bmIco=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  bmIco.setAttribute("width","13");bmIco.setAttribute("height","13");bmIco.setAttribute("viewBox","0 0 24 24");bmIco.setAttribute("fill","none");
+  ["M3 6h18","M3 12h18","M3 18h12"].forEach(d=>{const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);p.setAttribute("stroke","currentColor");p.setAttribute("stroke-width","2");p.setAttribute("stroke-linecap","round");bmIco.append(p);});
+  bmPlan.append(bmIco,document.createTextNode("Plan Marketing"));
   bmPlan.addEventListener("mouseenter",()=>{bmPlan.style.background="var(--border)";bmPlan.style.color="var(--text)";});
   bmPlan.addEventListener("mouseleave",()=>{bmPlan.style.background="var(--hover)";bmPlan.style.color="var(--sec)";});
   acts.append(bmPlan);
