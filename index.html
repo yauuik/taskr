@@ -2660,28 +2660,9 @@ function rCalc(){
   // Auto-formatting time input: 0910 → 09:10
   function timeInput(value,onChange){
     const input=h("input",{type:"text",value,placeholder:"--:--",inputMode:"numeric",style:{fontSize:"14px",padding:"6px 10px",border:"1.5px solid var(--border)",borderRadius:"8px",fontFamily:"monospace",color:"var(--text)",background:"var(--card)",outline:"none",textAlign:"center",width:"80px"}});
-    // Normalize: "734" → "07:34", "8" → "08:00", "1230" → "12:30", "7:5" → "07:05"
-    function normalize(raw){
-      const digits=raw.replace(/[^0-9]/g,"");
-      if(!digits)return "";
-      let h,m;
-      if(digits.length===1){h=digits;m="00";}
-      else if(digits.length===2){h=digits;m="00";}
-      else if(digits.length===3){h="0"+digits[0];m=digits.slice(1);}
-      else {h=digits.slice(0,2);m=digits.slice(2,4);}
-      const hh=Math.min(23,parseInt(h)||0);
-      const mm=Math.min(59,parseInt(m)||0);
-      return String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0");
-    }
     input.addEventListener("focus",()=>{input.style.borderColor="var(--accent)";input.select();});
-    input.addEventListener("blur",()=>{
-      input.style.borderColor="var(--border)";
-      if(!input.value.trim()){onChange("");return;}
-      const norm=normalize(input.value);
-      if(norm){input.value=norm;onChange(norm);}
-    });
+    input.addEventListener("blur",()=>{input.style.borderColor="var(--border)";if(input.value.length===5)onChange(input.value);});
     input.addEventListener("input",()=>{
-      // Light auto-format during typing: add ":" after 2 digits
       const pos=input.selectionStart;
       const raw=input.value.replace(/[^0-9]/g,"").slice(0,4);
       let formatted=raw;
@@ -2693,7 +2674,6 @@ function rCalc(){
       }
       if(formatted.length===5)onChange(formatted);
     });
-    input.addEventListener("keydown",e=>{if(e.key==="Enter"){input.blur();}});
     return input;
   }
 
