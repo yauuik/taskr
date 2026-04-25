@@ -1852,7 +1852,7 @@ function R(){
 
   // Topbar
   const tb=h("div",{className:"topbar"});
-  tb.append(h("h1",{},h("span",{},"Task"),h("span",{style:{color:"var(--amber)"}},"."),h("span",{style:{color:"var(--blue)"}},"r")));
+  tb.append(h("h1",{style:{display:"inline-flex",alignItems:"baseline"}},h("span",{},"Tas"),h("span",{style:{color:"var(--blue)",position:"relative",marginLeft:"-2px"}},"kr",h("span",{style:{position:"absolute",color:"var(--amber)",left:"calc(100% - 8px)",bottom:"4px",fontSize:"38px",lineHeight:"1"}},"."))));
   const acts=h("div",{style:{display:"flex",gap:"4px",alignItems:"center"}});
   // Bookmark: Plan Marketing Jira
   const bmPlan=h("a",{href:"https://ethias.atlassian.net/jira/plans/3845/scenarios/3862/timeline",target:"_blank",rel:"noopener",title:"Plan Marketing (Jira)",style:{display:"inline-flex",alignItems:"center",gap:"6px",padding:"4px 10px",borderRadius:"6px",background:"var(--hover)",color:"var(--sec)",fontSize:"11px",fontWeight:"600",textDecoration:"none",fontFamily:"inherit",marginRight:"8px",borderRight:"1px solid var(--border)",paddingRight:"14px",transition:"all .15s"}});
