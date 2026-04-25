@@ -325,7 +325,7 @@ const SETTINGS_KEY="taskr-settings";
 function loadSettings(){try{return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{};}catch{return {};}}
 function saveSettings(v){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(v));}catch{}}
 let settings=loadSettings();
-let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,sett:false,cm:null,cf:null,nk:"",an:"",sel:new Set(),doneOpen:false,sh:false,noteEdit:false,_dateSort:settings._dateSort||null,calView:settings.calView||false,stOpen:new Set()};
+let s={p:[],ok:false,sy:"loading",ed:null,exp:false,keys:false,sett:false,cm:null,cf:null,nk:"",an:"",sel:new Set(),doneOpen:false,sh:false,noteEdit:false,_dateSort:settings._dateSort||null,calView:settings.calView||false,stOpen:new Set(),cat:settings.cat||"all"};
 let svT=null;
 const syncLogs=[];
 function slog(type,msg){
@@ -981,7 +981,7 @@ function tog(id,reverse){
 
 function qadd(){
   if(!s.an.trim())return;
-  const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:""};
+  const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
   s._newId=n.id;ps([n,...s.p]);
   s.an="";s.nk="";
 }
@@ -1228,6 +1228,21 @@ function mkRow(p,depth){
       dateRow.append(h("button",{style:{background:"none",border:"none",fontSize:"14px",cursor:"pointer",color:"var(--muted)",padding:"2px 4px",lineHeight:"1",marginLeft:"4px"},onClick:()=>{up(p.id,{due:null});}},"×"));
     }
     panel.append(dateRow);
+
+    // Category selector (only for top-level)
+    if(depth===0){
+      const catSel=h("div",{style:{display:"flex",alignItems:"center",gap:"6px",marginBottom:"8px",padding:"4px 0"}});
+      catSel.append(h("span",{style:{fontSize:"11px",color:"var(--muted)",fontWeight:"600",textTransform:"uppercase",letterSpacing:".04em"}},"Catégorie"));
+      const curCat=p.cat||"ethias";
+      function mkCatBtn(id,label,color){
+        const active=curCat===id;
+        const b=h("button",{style:{padding:"3px 10px",borderRadius:"12px",border:"1.5px solid "+(active?color:"var(--border)"),background:active?color:"transparent",color:active?"#fff":"var(--sec)",fontSize:"11px",fontWeight:"600",cursor:"pointer",fontFamily:"inherit",transition:"all .15s"},onClick:e=>{e.stopPropagation();up(p.id,{cat:id});}});
+        b.textContent=label;
+        return b;
+      }
+      catSel.append(mkCatBtn("ethias","Ethias","#0086C0"),mkCatBtn("perso","Perso","#00C875"));
+      panel.append(catSel);
+    }
 
     // Add task input (only for top-level)
     if(depth===0){
@@ -1694,7 +1709,7 @@ function mkAddForm(opts){
     style:{fontSize:fs2,fontWeight:"500"},
     onInput:v=>{s.an=v;if(addBtn){addBtn.style.background=v.trim()?"var(--accent)":"var(--muted)";addBtn.style.opacity=v.trim()?"1":".5";addBtn.style.cursor=v.trim()?"pointer":"default";}},
     onEnter:()=>{if(s.an.trim()){
-      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:""};
+      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
       if(formDate)n.due=formDate;
       s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
       if(opts.onDone)opts.onDone();
@@ -1723,7 +1738,7 @@ function mkAddForm(opts){
     h("button",{style:{padding:bPad,borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:bFs,fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";if(opts.onDone)opts.onDone();else R();}},"Annuler")
   );
   const addBtn=h("button",{style:{padding:bPad,borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:bFs,fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim()){
-      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:""};
+      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
       if(formDate)n.due=formDate;
       s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
       if(opts.onDone)opts.onDone();
@@ -1736,7 +1751,7 @@ function mkAddForm(opts){
     if(e.key==="Enter"&&!e.target.classList?.contains("ce-field")){
       e.preventDefault();
       if(s.an.trim()){
-        const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:""};
+        const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
         if(formDate)n.due=formDate;
         s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
         if(opts.onDone)opts.onDone();
@@ -1801,9 +1816,10 @@ function R(){
   }
   const sortFn=s._dateSort?dateSort:urgSort;
 
-  const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden&&matchSearch(p)).sort(sortFn);
-  const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden&&matchSearch(p)).sort(sortFn);
-  const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden&&matchSearch(p)).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
+  const matchCat=p=>s.cat==="all"||(p.cat||"ethias")===s.cat;
+  const ip=s.p.filter(p=>p.status==="In Progress"&&!p.hidden&&matchSearch(p)&&matchCat(p)).sort(sortFn);
+  const td2=s.p.filter(p=>p.status==="To Do"&&!p.hidden&&matchSearch(p)&&matchCat(p)).sort(sortFn);
+  const dn=s.p.filter(p=>p.status==="Done"&&!p.hidden&&matchSearch(p)&&matchCat(p)).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
   const hid=s.p.filter(p=>p.hidden);
 
   // Clean stale selection IDs
@@ -2051,6 +2067,17 @@ function R(){
       h("button",{className:"btn-t",onClick:()=>{s.sel.clear();R();}},"Annuler")
     );w.append(sb2);
   }
+
+  // Category tabs: All / Ethias / Perso
+  const catRow=h("div",{style:{display:"flex",gap:"4px",marginBottom:"10px",borderBottom:"1px solid var(--border)",paddingBottom:"0"}});
+  function mkCatTab(id,label,color){
+    const active=s.cat===id;
+    const tab=h("button",{style:{background:"none",border:"none",cursor:"pointer",padding:"8px 14px",fontSize:"13px",fontWeight:active?"700":"500",color:active?(color||"var(--text)"):"var(--muted)",fontFamily:"inherit",borderBottom:active?"2px solid "+(color||"var(--accent)"):"2px solid transparent",marginBottom:"-1px",transition:"all .15s"},onClick:()=>{s.cat=id;settings.cat=id;saveSettings(settings);R();}});
+    tab.textContent=label;
+    return tab;
+  }
+  catRow.append(mkCatTab("all","Tout"),mkCatTab("ethias","Ethias","#0086C0"),mkCatTab("perso","Perso","#00C875"));
+  w.append(catRow);
 
   // Sort toggle + Calendar view toggle
   const sortRow=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"flex-end",marginBottom:"8px",gap:"4px"}});
