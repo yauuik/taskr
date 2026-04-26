@@ -1716,17 +1716,40 @@ function mkAddForm(opts){
   const bPad=opts.btnPad||"6px 14px";const bFs=opts.btnFont||"12px";
   const wrap=h("div");
   let formDate=s._qiDate||null;
+  // Forward declaration
+  let addBtn=null;
+  function submitTask(){
+    const txt=s.an.trim();if(!txt)return;
+    const ytMatch=txt.match(/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+    if(ytMatch&&!txt.includes(" ")){
+      fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(txt)+"&format=json")
+        .then(r=>r.json())
+        .then(d=>{
+          const title=(d&&d.title)?d.title:txt;
+          const n={id:gid(),name:capFirst(title),status:"To Do",children:[],note:'<a href="'+txt+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+txt+'</a>',cat:s.cat==="all"?"ethias":s.cat};
+          if(formDate)n.due=formDate;
+          s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
+          if(opts.onDone)opts.onDone();
+        })
+        .catch(()=>{
+          const n={id:gid(),name:capFirst(txt),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
+          if(formDate)n.due=formDate;
+          s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
+          if(opts.onDone)opts.onDone();
+        });
+      return;
+    }
+    const n={id:gid(),name:capFirst(txt),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
+    if(formDate)n.due=formDate;
+    s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
+    if(opts.onDone)opts.onDone();
+  }
   const inputWrap=h("div",{style:{padding:pd.replace(/\s.*$/,"")+" "+pd.replace(/^.*\s/,"")}});
   inputWrap.append(mentionField({
     value:s.an,placeholder:"Nom de la tâche…",
     style:{fontSize:fs2,fontWeight:"500"},
     onInput:v=>{s.an=v;if(addBtn){addBtn.style.background=v.trim()?"var(--accent)":"var(--muted)";addBtn.style.opacity=v.trim()?"1":".5";addBtn.style.cursor=v.trim()?"pointer":"default";}},
-    onEnter:()=>{if(s.an.trim()){
-      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
-      if(formDate)n.due=formDate;
-      s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
-      if(opts.onDone)opts.onDone();
-    }},
+    onEnter:submitTask,
     focusEnd:true
   }));
   wrap.append(inputWrap);
@@ -1750,12 +1773,8 @@ function mkAddForm(opts){
   foot.append(
     h("button",{style:{padding:bPad,borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:bFs,fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";if(opts.onDone)opts.onDone();else R();}},"Annuler")
   );
-  const addBtn=h("button",{style:{padding:bPad,borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:bFs,fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim()){
-      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
-      if(formDate)n.due=formDate;
-      s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
-      if(opts.onDone)opts.onDone();
-    }}});
+  // Helper: create task, detecting YouTube URLs to swap name with title
+  addBtn=h("button",{style:{padding:bPad,borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:bFs,fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:submitTask});
   addBtn.textContent="Ajouter";
   foot.append(addBtn);
   wrap.append(foot);
@@ -1763,12 +1782,7 @@ function mkAddForm(opts){
   wrap.addEventListener("keydown",e=>{
     if(e.key==="Enter"&&!e.target.classList?.contains("ce-field")){
       e.preventDefault();
-      if(s.an.trim()){
-        const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
-        if(formDate)n.due=formDate;
-        s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
-        if(opts.onDone)opts.onDone();
-      }
+      submitTask();
     }
   });
   return wrap;
