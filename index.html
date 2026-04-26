@@ -1722,17 +1722,21 @@ function mkAddForm(opts){
     const txt=s.an.trim();if(!txt)return;
     const ytMatch=txt.match(/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
     if(ytMatch&&!txt.includes(" ")){
+      // Build link HTML for note (always put URL in note)
+      const noteHtml='<a href="'+txt+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+txt+'</a>';
+      // Try to fetch title for nicer name
       fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(txt)+"&format=json")
-        .then(r=>r.json())
+        .then(r=>r.ok?r.json():null)
         .then(d=>{
-          const title=(d&&d.title)?d.title:txt;
-          const n={id:gid(),name:capFirst(title),status:"To Do",children:[],note:'<a href="'+txt+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+txt+'</a>',cat:s.cat==="all"?"ethias":s.cat};
+          const title=(d&&d.title)?d.title:("Vidéo YouTube — "+ytMatch[1]);
+          const n={id:gid(),name:capFirst(title),status:"To Do",children:[],note:noteHtml,cat:s.cat==="all"?"ethias":s.cat};
           if(formDate)n.due=formDate;
           s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
           if(opts.onDone)opts.onDone();
         })
         .catch(()=>{
-          const n={id:gid(),name:capFirst(txt),status:"To Do",children:[],note:"",cat:s.cat==="all"?"ethias":s.cat};
+          // Fallback: still create with URL as note, generic name
+          const n={id:gid(),name:"Vidéo YouTube — "+ytMatch[1],status:"To Do",children:[],note:noteHtml,cat:s.cat==="all"?"ethias":s.cat};
           if(formDate)n.due=formDate;
           s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
           if(opts.onDone)opts.onDone();
