@@ -1762,29 +1762,17 @@ function mkAddForm(opts){
     if(!ytMatch||plain.trim().includes("\n"))return;
     e.preventDefault();
     const url=plain.trim();
-    // Set placeholder while loading
     s.an="⏳ Chargement…";
-    const inputEl=wrap.querySelector(".ce-field");
-    if(inputEl)inputEl.textContent=s.an;
-    // Stash the URL for the next add
     s._pendingYtUrl=url;
-    // Fetch title via oEmbed
+    R();
     fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(url)+"&format=json")
       .then(r=>r.json())
       .then(d=>{
-        if(d&&d.title){
-          s.an="▶ "+d.title;
-          if(inputEl){inputEl.textContent=s.an;inputEl.focus();}
-          if(addBtn){addBtn.style.background="var(--accent)";addBtn.style.opacity="1";addBtn.style.cursor="pointer";}
-        } else {
-          s.an=url;
-          if(inputEl)inputEl.textContent=s.an;
-        }
+        s.an=(d&&d.title)?("▶ "+d.title):url;
+        R();
+        requestAnimationFrame(()=>{const f=document.querySelector(".quick .ce-field");if(f){f.focus();const range=document.createRange();range.selectNodeContents(f);range.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);}});
       })
-      .catch(()=>{
-        s.an=url;
-        if(inputEl)inputEl.textContent=s.an;
-      });
+      .catch(()=>{s.an=url;R();});
   });
   // Footer
   const foot=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",padding:"8px "+pd.replace(/^.*\s/,""),borderTop:"1px solid var(--border)"}});
