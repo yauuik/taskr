@@ -321,6 +321,31 @@ function mkSvg(name,size,extra){
 }
 // ─── Paste cleanup (shared) ───
 function cleanPaste(e){
+  // Check for YouTube URL in plain text first
+  const plain=(e.clipboardData||window.clipboardData).getData("text/plain");
+  const ytMatch=plain&&plain.trim().match(/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  if(ytMatch&&!plain.trim().includes("\n")){
+    e.preventDefault();
+    const url=plain.trim();
+    // Insert placeholder link first, will be updated with title
+    const placeholder='<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline" data-yt-loading="1">'+url+'</a>';
+    document.execCommand("insertHTML",false,placeholder);
+    // Fetch title via YouTube oEmbed (no API key needed, CORS-friendly)
+    fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(url)+"&format=json")
+      .then(r=>r.json())
+      .then(d=>{
+        if(d&&d.title){
+          // Find the placeholder link and update it
+          const links=document.querySelectorAll('a[data-yt-loading="1"]');
+          links.forEach(a=>{if(a.href===url){a.textContent="▶ "+d.title;a.removeAttribute("data-yt-loading");}});
+          // Trigger save on the parent contentEditable
+          const ed=links[0]?.closest("[contenteditable]");
+          if(ed)ed.dispatchEvent(new Event("input",{bubbles:true}));
+        }
+      })
+      .catch(()=>{/* silently keep URL if fetch fails */});
+    return;
+  }
   const html=(e.clipboardData||window.clipboardData).getData("text/html");
   if(html){
     e.preventDefault();
