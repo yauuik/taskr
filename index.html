@@ -1019,10 +1019,7 @@ function tog(id,reverse){
 
 function qadd(){
   if(!s.an.trim())return;
-  const _ytName=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl&&s._pendingYtTitle?s._pendingYtTitle:capFirst(s.an.trim());
-      const _ytNote=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"";
-      const n={id:gid(),name:_ytName,status:"To Do",children:[],note:_ytNote,cat:s.cat==="all"?"ethias":s.cat};
-      if(s._pendingYtUrl){s._pendingYtUrl=null;s._pendingYtTitle=null;}
+  const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"",cat:s.cat==="all"?"ethias":s.cat};if(s._pendingYtUrl)s._pendingYtUrl=null;
   s._newId=n.id;ps([n,...s.p]);
   s.an="";s.nk="";
 }
@@ -1744,26 +1741,13 @@ function mkAddForm(opts){
   const bPad=opts.btnPad||"6px 14px";const bFs=opts.btnFont||"12px";
   const wrap=h("div");
   let formDate=s._qiDate||null;
-  const inputWrap=h("div",{style:{padding:pd.replace(/\s.*$/,"")+" "+pd.replace(/^.*\s/,""),position:"relative"}});
-  // YouTube indicator (red play badge when URL is in field)
-  const ytBadge=h("div",{style:{position:"absolute",right:"16px",top:"50%",transform:"translateY(-50%)",display:s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl?"flex":"none",alignItems:"center",gap:"4px",padding:"3px 8px",background:"#FF0000",color:"#fff",borderRadius:"4px",fontSize:"10px",fontWeight:"700",letterSpacing:".04em",pointerEvents:"none"}});
-  ytBadge.textContent="▶ YOUTUBE";
-  inputWrap.append(ytBadge);
+  const inputWrap=h("div",{style:{padding:pd.replace(/\s.*$/,"")+" "+pd.replace(/^.*\s/,"")}});
   inputWrap.append(mentionField({
     value:s.an,placeholder:"Nom de la tâche…",
     style:{fontSize:fs2,fontWeight:"500"},
-    onInput:v=>{
-      s.an=v;
-      // If user changed the field and it no longer matches the pasted URL, clear pending
-      if(s._pendingYtUrl&&v.trim()!==s._pendingYtUrl){s._pendingYtUrl=null;s._pendingYtTitle=null;}
-      if(ytBadge)ytBadge.style.display=s._pendingYtUrl&&v.trim()===s._pendingYtUrl?"flex":"none";
-      if(addBtn){addBtn.style.background=v.trim()?"var(--accent)":"var(--muted)";addBtn.style.opacity=v.trim()?"1":".5";addBtn.style.cursor=v.trim()?"pointer":"default";}
-    },
+    onInput:v=>{s.an=v;if(addBtn){addBtn.style.background=v.trim()?"var(--accent)":"var(--muted)";addBtn.style.opacity=v.trim()?"1":".5";addBtn.style.cursor=v.trim()?"pointer":"default";}},
     onEnter:()=>{if(s.an.trim()){
-      const _ytName=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl&&s._pendingYtTitle?s._pendingYtTitle:capFirst(s.an.trim());
-      const _ytNote=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"";
-      const n={id:gid(),name:_ytName,status:"To Do",children:[],note:_ytNote,cat:s.cat==="all"?"ethias":s.cat};
-      if(s._pendingYtUrl){s._pendingYtUrl=null;s._pendingYtTitle=null;}
+      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"",cat:s.cat==="all"?"ethias":s.cat};if(s._pendingYtUrl)s._pendingYtUrl=null;
       if(formDate)n.due=formDate;
       s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
       if(opts.onDone)opts.onDone();
@@ -1771,18 +1755,24 @@ function mkAddForm(opts){
     focusEnd:true
   }));
   wrap.append(inputWrap);
-  // YouTube link paste detection — keeps URL visible, converts to title only on submit
+  // YouTube link paste detection — replaces with title + puts URL in note
   wrap.addEventListener("paste",e=>{
     const plain=(e.clipboardData||window.clipboardData).getData("text/plain");
     const ytMatch=plain&&plain.trim().match(/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
     if(!ytMatch||plain.trim().includes("\n"))return;
-    // Don't preventDefault — let URL appear in field as-is
-    s._pendingYtUrl=plain.trim();
-    // Pre-fetch the title in background so it's ready on submit
-    fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(plain.trim())+"&format=json")
+    e.preventDefault();
+    const url=plain.trim();
+    s.an="⏳ Chargement…";
+    s._pendingYtUrl=url;
+    R();
+    fetch("https://www.youtube.com/oembed?url="+encodeURIComponent(url)+"&format=json")
       .then(r=>r.json())
-      .then(d=>{if(d&&d.title)s._pendingYtTitle=d.title;})
-      .catch(()=>{});
+      .then(d=>{
+        s.an=(d&&d.title)?("▶ "+d.title):url;
+        R();
+        requestAnimationFrame(()=>{const f=document.querySelector(".quick .ce-field");if(f){f.focus();const range=document.createRange();range.selectNodeContents(f);range.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);}});
+      })
+      .catch(()=>{s.an=url;R();});
   });
   // Footer
   const foot=h("div",{style:{display:"flex",alignItems:"center",gap:"8px",padding:"8px "+pd.replace(/^.*\s/,""),borderTop:"1px solid var(--border)"}});
@@ -1805,10 +1795,7 @@ function mkAddForm(opts){
     h("button",{style:{padding:bPad,borderRadius:"6px",border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:bFs,fontWeight:"600",cursor:"pointer",fontFamily:"inherit"},onClick:()=>{s.an="";if(opts.onDone)opts.onDone();else R();}},"Annuler")
   );
   const addBtn=h("button",{style:{padding:bPad,borderRadius:"6px",border:"none",background:s.an.trim()?"var(--accent)":"var(--muted)",color:"#fff",fontSize:bFs,fontWeight:"600",cursor:s.an.trim()?"pointer":"default",fontFamily:"inherit",opacity:s.an.trim()?"1":".5"},onClick:()=>{if(s.an.trim()){
-      const _ytName=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl&&s._pendingYtTitle?s._pendingYtTitle:capFirst(s.an.trim());
-      const _ytNote=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"";
-      const n={id:gid(),name:_ytName,status:"To Do",children:[],note:_ytNote,cat:s.cat==="all"?"ethias":s.cat};
-      if(s._pendingYtUrl){s._pendingYtUrl=null;s._pendingYtTitle=null;}
+      const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"",cat:s.cat==="all"?"ethias":s.cat};if(s._pendingYtUrl)s._pendingYtUrl=null;
       if(formDate)n.due=formDate;
       s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
       if(opts.onDone)opts.onDone();
@@ -1821,10 +1808,7 @@ function mkAddForm(opts){
     if(e.key==="Enter"&&!e.target.classList?.contains("ce-field")){
       e.preventDefault();
       if(s.an.trim()){
-        const _ytName=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl&&s._pendingYtTitle?s._pendingYtTitle:capFirst(s.an.trim());
-      const _ytNote=s._pendingYtUrl&&s.an.trim()===s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"";
-      const n={id:gid(),name:_ytName,status:"To Do",children:[],note:_ytNote,cat:s.cat==="all"?"ethias":s.cat};
-      if(s._pendingYtUrl){s._pendingYtUrl=null;s._pendingYtTitle=null;}
+        const n={id:gid(),name:capFirst(s.an.trim()),status:"To Do",children:[],note:s._pendingYtUrl?('<a href="'+s._pendingYtUrl+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">'+s._pendingYtUrl+'</a>'):"",cat:s.cat==="all"?"ethias":s.cat};if(s._pendingYtUrl)s._pendingYtUrl=null;
         if(formDate)n.due=formDate;
         s._newId=n.id;ps([n,...s.p]);s.an="";s.nk="";
         if(opts.onDone)opts.onDone();
