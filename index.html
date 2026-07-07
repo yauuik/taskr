@@ -1881,6 +1881,17 @@ function R(){
   bmPlan.addEventListener("mouseenter",()=>{bmPlan.style.background="var(--border)";bmPlan.style.color="var(--text)";});
   bmPlan.addEventListener("mouseleave",()=>{bmPlan.style.background="var(--hover)";bmPlan.style.color="var(--sec)";});
   acts.append(bmPlan);
+  // Bookmark: Jira ticket helpers
+  function mkJiraBm(ticketId){
+    const bm=h("a",{href:"https://ethias.atlassian.net/browse/"+ticketId,target:"_blank",rel:"noopener",title:"Ticket "+ticketId,style:{display:"inline-flex",alignItems:"center",gap:"5px",padding:"4px 8px",borderRadius:"6px",background:"var(--hover)",color:"var(--sec)",fontSize:"11px",fontWeight:"600",textDecoration:"none",fontFamily:"'IBM Plex Mono',monospace",marginRight:"4px",transition:"all .15s"}});
+    bm.textContent=ticketId;
+    bm.addEventListener("mouseenter",()=>{bm.style.background="var(--border)";bm.style.color="var(--text)";});
+    bm.addEventListener("mouseleave",()=>{bm.style.background="var(--hover)";bm.style.color="var(--sec)";});
+    return bm;
+  }
+  const jiraGroup=h("div",{style:{display:"inline-flex",alignItems:"center",gap:"2px",marginRight:"8px",paddingRight:"10px",borderRight:"1px solid var(--border)"}});
+  jiraGroup.append(mkJiraBm("CJ-20384"),mkJiraBm("CJ-20756"));
+  acts.append(jiraGroup);
   // Helper: make SVG icon button
   function mkIcon(title,paths,onClick){
     const b=h("button",{className:"icon-btn",title,onClick});
